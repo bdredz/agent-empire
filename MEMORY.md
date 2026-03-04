@@ -31,3 +31,13 @@
 ### Gotchas
 - Use `global.fetch = fetchMock as unknown as typeof fetch` pattern for typed fetch mocking (double-cast avoids `as any`)
 - Remaining `as any` in `Jarvis.ts` is OPUS-domain — do not modify
+
+## 2026-03-04 — QA Remediation: CODEX Primitives DRY Consolidation
+### What changed
+- Created `src/primitives/db.ts` with shared `QueryChain<T>` and `PrimitiveDb` interfaces
+- Removed 3 duplicated `QueryChain` + DB interface definitions from LeadTracker, ApiGateway, and WebhookManager operations files
+- Each primitive now imports from `@primitives/db` and narrows via `Pick<>` as needed
+
+### Gotchas
+- Use `Pick<PrimitiveDb, 'insert' | 'select'>` pattern to narrow the DB interface per-primitive rather than defining separate interfaces
+- `QueryChain<T>` uses default generic `T = Array<Record<string, unknown>>` so callers can omit the type parameter

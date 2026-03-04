@@ -1,21 +1,9 @@
 import { createHmac } from 'node:crypto'
 import { and, eq } from 'drizzle-orm'
 import { webhookSubscriptionTable } from '@primitives/WebhookManager/schema'
+import { PrimitiveDb } from '@primitives/db'
 
-interface QueryChain {
-  values(payload: Record<string, unknown>): QueryChain
-  set(payload: Record<string, unknown>): QueryChain
-  from(table: unknown): QueryChain
-  where(condition: unknown): QueryChain
-  execute(): Promise<Array<Record<string, unknown>>>
-  returning(selection: Record<string, unknown>): Promise<Array<Record<string, unknown>>>
-}
-
-interface WebhookDb {
-  insert(table: unknown): QueryChain
-  select(): QueryChain
-  update(table: unknown): QueryChain
-}
+type WebhookDb = Pick<PrimitiveDb, 'insert' | 'select' | 'update'>
 
 interface WebhookFetchResponse {
   readonly ok: boolean
@@ -34,7 +22,7 @@ export class WebhookManagerOps {
   constructor(
     private readonly db: WebhookDb,
     private readonly fetcher: WebhookFetcher,
-  ) {}
+  ) { }
 
   public async registerWebhook(
     businessId: string,

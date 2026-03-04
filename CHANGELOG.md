@@ -129,3 +129,13 @@ Format is strict — follow exactly.
 **Files modified:** 7 (BudgetVisualization.tsx, DataTransformer.ts, TaskDAGViewer.tsx, ApiCaller.test.ts, DataScraper.test.ts, NotificationSender.test.ts, SchemaValidator.test.ts)
 **Tests:** 145/145 (all passing)
 **Notes:** Eliminated all GEMINI-domain `any` usage. Replaced `: any` formatter annotations with inferred types, `as any` casts with `Record<string, unknown>`, fetch mock casts with typed `fetchMock` variables, and output assertion casts with proper interfaces. Fixed relative import in TaskDAGViewer to use `@orchestrator` path alias.
+
+### 2026-03-04 GEMINI — QA Remediation: CODEX Primitives DRY Consolidation
+**Branch:** agent/gemini/dashboard-components
+**Status:** PASS
+**Interfaces consumed:** N/A
+**Interfaces produced:** QueryChain<T>, PrimitiveDb (src/primitives/db.ts)
+**Files created:** 1 (src/primitives/db.ts)
+**Files modified:** 3 (LeadTracker/operations.ts, ApiGateway/operations.ts, WebhookManager/operations.ts)
+**Tests:** 28/28 primitives passing, 145/145 total passing
+**Notes:** Extracted shared QueryChain and PrimitiveDb interfaces from 3 duplicated definitions into `src/primitives/db.ts`. Each primitive now imports from the shared module. LeadTracker uses full PrimitiveDb, ApiGateway uses `Pick<PrimitiveDb, 'insert'>`, WebhookManager uses `Pick<PrimitiveDb, 'insert' | 'select' | 'update'>`.

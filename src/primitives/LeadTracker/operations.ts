@@ -1,24 +1,9 @@
 import { and, eq } from 'drizzle-orm'
 import { LeadStatus, leadTable } from '@primitives/LeadTracker/schema'
-
-interface QueryChain<T> {
-  values(payload: Record<string, unknown>): QueryChain<T>
-  set(payload: Record<string, unknown>): QueryChain<T>
-  from(table: unknown): QueryChain<T>
-  where(condition: unknown): QueryChain<T>
-  execute(): Promise<T>
-  returning(selection: Record<string, unknown>): Promise<T>
-}
-
-interface LeadTrackerDb {
-  insert(table: unknown): QueryChain<Array<Record<string, unknown>>>
-  select(): QueryChain<Array<Record<string, unknown>>>
-  update(table: unknown): QueryChain<Array<Record<string, unknown>>>
-  delete(table: unknown): QueryChain<Array<Record<string, unknown>>>
-}
+import { PrimitiveDb } from '@primitives/db'
 
 export class LeadTrackerOps {
-  constructor(private readonly db: LeadTrackerDb) {}
+  constructor(private readonly db: PrimitiveDb) { }
 
   public async createLead(
     businessId: string,

@@ -1,13 +1,7 @@
 import { apiGatewayRequestTable } from '@primitives/ApiGateway/schema'
+import { PrimitiveDb } from '@primitives/db'
 
-interface QueryChain {
-  values(payload: Record<string, unknown>): QueryChain
-  returning(selection: Record<string, unknown>): Promise<Array<Record<string, unknown>>>
-}
-
-interface ApiGatewayDb {
-  insert(table: unknown): QueryChain
-}
+type ApiGatewayDb = Pick<PrimitiveDb, 'insert'>
 
 interface FetchResponse {
   readonly status: number
@@ -42,7 +36,7 @@ export class ApiGatewayOps {
     private readonly db: ApiGatewayDb,
     private readonly fetcher: (url: string, init: RequestInit) => Promise<FetchResponse>,
     private readonly now: () => number = () => Date.now(),
-  ) {}
+  ) { }
 
   public async proxyRequest(input: ProxyRequestInput): Promise<ProxyRequestResult> {
     this.enforceRateLimit(input.businessId, input.rateLimitPerMin ?? 60)
