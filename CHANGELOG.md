@@ -30,3 +30,12 @@ Format is strict — follow exactly.
 **Files created:** 7 (types.ts, AGENTS.md, package.json, tsconfig.json, CLAUDE.md, CODEX-ASSIGNMENT.md, GEMINI-ASSIGNMENT.md, OPUS-ASSIGNMENT.md, CHANGELOG.md)
 **Tests:** 0/0 (scaffold phase, no tests yet)
 **Notes:** Types are frozen. All agents import from src/shared/types.ts. Do not add types without PR review.
+
+### 2026-03-04 GEMINI — Phase 8: Worker Templates
+**Branch:** agent/gemini/worker-templates
+**Status:** PASS
+**Interfaces consumed:** TaskSpec, ModelTier, Capability
+**Interfaces produced:** IWorker, WorkerResult
+**Files created:** 17
+**Tests:** 45/45
+**Notes:** Implemented and tested all 8 requested single-purpose workers.
