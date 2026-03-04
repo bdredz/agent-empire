@@ -148,6 +148,15 @@ Format is strict — follow exactly.
 **Tests:** 10/10 integration tests, 180/180 total suite
 **Notes:** 8 end-to-end flows verified: (1) Agent lifecycle — Factory creates agent, Governor allocates/checks budget, circuit breaker trips on overuse. (2) Child budget enforcement — Factory rejects child budget exceeding parent. (3) Business provisioning — Mechanic orchestrates Docker/DB/Repo provisioners end-to-end. (4) Full orchestration — Jarvis goal→DAG→execution→eval pipeline pass. (5) Clarification protocol — underspecified goals trigger ClarificationRequest, not decomposition. (6) Escalation handling — retry on partial progress, abort on total failure, hitl on escalation. (7) A2A protocol — task assignment and result envelopes with correlation tracking. (8) Full pipeline — Factory→Governor→Mechanic→Jarvis→EvalPipeline→termination. All 20 test files pass (180 tests). Zero integration-domain typecheck errors.
 
+### 2026-03-04 OPUS — Repo Setup: Private GitHub Repository
+**Branch:** all (main, agent/gemini/dashboard-components, agent/gemini/tool-primitives, agent/gemini/worker-templates)
+**Status:** PASS
+**Interfaces consumed:** N/A
+**Interfaces produced:** N/A
+**Files created:** 1 (.gitignore)
+**Tests:** 180/180 (no change)
+**Notes:** Created private GitHub repo at https://github.com/bdredz/agent-empire. Added .gitignore (node_modules/, dist/, .data/, .env, coverage/, tmp/). Rewrote git history via `git filter-branch` to remove 109MB node_modules binary (next-swc.darwin-arm64.node) that was committed before .gitignore existed. Pushed all 4 branches. Repo visibility: PRIVATE. Default branch: main.
+
 ### 2026-03-04 GEMINI — QA Remediation: CODEX Primitives DRY Consolidation
 **Branch:** agent/gemini/dashboard-components
 **Status:** PASS
