@@ -29,6 +29,13 @@ const createMockSpec = (message?: unknown, channel?: unknown, priority: TaskPrio
 describe('NotificationSender', () => {
     let sender: NotificationSender
 
+    interface NotificationOutput {
+        dispatchedAt: string
+        channel: string
+        messageSnippet: string
+        status: string
+    }
+
     beforeEach(() => {
         sender = new NotificationSender()
     })
@@ -36,8 +43,9 @@ describe('NotificationSender', () => {
     it('1. happy path: sends notification to valid channel', async () => {
         const result = await sender.execute(createMockSpec('System is down!', 'slack'))
         expect(result.success).toBe(true)
-        expect((result.output as any).status).toBe('delivered')
-        expect((result.output as any).channel).toBe('slack')
+        const output = result.output as NotificationOutput
+        expect(output.status).toBe('delivered')
+        expect(output.channel).toBe('slack')
     })
 
     it('2. empty input: array of errors on missing message', async () => {

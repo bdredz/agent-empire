@@ -74,6 +74,7 @@ describe('SchemaValidator', () => {
         expect(result.success).toBe(false)
         expect(result.errors).toContain('Validation failed against Zod schema')
         // output should contain zod formatting error for age
-        expect((result.output as any).age._errors).toBeDefined()
+        const formatted = result.output as { age?: { _errors: string[] } }
+        expect(formatted.age?._errors).toBeDefined()
     })
 })

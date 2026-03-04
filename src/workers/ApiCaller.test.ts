@@ -28,14 +28,23 @@ const createMockSpec = (url?: unknown, priority: TaskPriority = 'normal', additi
 
 describe('ApiCaller', () => {
     let caller: ApiCaller
+    let fetchMock: ReturnType<typeof vi.fn>
+
+    interface ApiCallerOutput {
+        status: number
+        statusText: string
+        headers: Record<string, string>
+        data: unknown
+    }
 
     beforeEach(() => {
         caller = new ApiCaller()
-        global.fetch = vi.fn() as any
+        fetchMock = vi.fn()
+        global.fetch = fetchMock as unknown as typeof fetch
     })
 
     it('1. happy path: fetches json successfully', async () => {
-        ; (global.fetch as any).mockResolvedValueOnce({
+        fetchMock.mockResolvedValueOnce({
             ok: true,
             status: 200,
             statusText: 'OK',
@@ -46,8 +55,9 @@ describe('ApiCaller', () => {
         const result = await caller.execute(createMockSpec('http://api.example.com/data'))
 
         expect(result.success).toBe(true)
-        expect((result.output as any).status).toBe(200)
-        expect((result.output as any).data).toEqual({ ok: true })
+        const output = result.output as ApiCallerOutput
+        expect(output.status).toBe(200)
+        expect(output.data).toEqual({ ok: true })
     })
 
     it('2. empty input: fails when url is missing', async () => {
@@ -69,14 +79,14 @@ describe('ApiCaller', () => {
     })
 
     it('5. error handling: handles network disconnect gracefully', async () => {
-        ; (global.fetch as any).mockRejectedValueOnce(new Error('Network offline'))
+        fetchMock.mockRejectedValueOnce(new Error('Network offline'))
         const result = await caller.execute(createMockSpec('http://example.com'))
         expect(result.success).toBe(false)
         expect(result.errors).toContain('Network offline')
     })
 
     it('6. http error: returns success false but structural output on 500', async () => {
-        ; (global.fetch as any).mockResolvedValueOnce({
+        fetchMock.mockResolvedValueOnce({
             ok: false,
             status: 500,
             statusText: 'Internal Server Error',
@@ -86,7 +96,8 @@ describe('ApiCaller', () => {
         const result = await caller.execute(createMockSpec('http://example.com/fail'))
         expect(result.success).toBe(false)
         expect(result.errors).toContain('HTTP 500: Internal Server Error')
-        expect((result.output as any).status).toBe(500)
-        expect((result.output as any).data).toBe('Crash')
+        const failOutput = result.output as ApiCallerOutput
+        expect(failOutput.status).toBe(500)
+        expect(failOutput.data).toBe('Crash')
     })
 })

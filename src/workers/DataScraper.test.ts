@@ -25,15 +25,17 @@ const createMockSpec = (url?: unknown, priority: TaskPriority = 'normal'): TaskS
 
 describe('DataScraper', () => {
     let scraper: DataScraper
+    let fetchMock: ReturnType<typeof vi.fn>
 
     beforeEach(() => {
         scraper = new DataScraper()
-        global.fetch = vi.fn() as any
+        fetchMock = vi.fn()
+        global.fetch = fetchMock as unknown as typeof fetch
     })
 
     it('1. happy path: scrapes and returns structured JSON', async () => {
         const mockHtml = `<html><head><title>Test Page</title><meta name="description" content="Test Desc"></head><body><h1>Hello</h1><p>World</p></body></html>`
-            ; (global.fetch as any).mockResolvedValueOnce(new Response(mockHtml, { status: 200 }))
+        fetchMock.mockResolvedValueOnce(new Response(mockHtml, { status: 200 }))
 
         const result = await scraper.execute(createMockSpec('http://example.com'))
 
@@ -65,14 +67,14 @@ describe('DataScraper', () => {
     })
 
     it('5. error handling: handles non-200 responses', async () => {
-        ; (global.fetch as any).mockResolvedValueOnce(new Response('Not Found', { status: 404 }))
+        fetchMock.mockResolvedValueOnce(new Response('Not Found', { status: 404 }))
         const result = await scraper.execute(createMockSpec('http://example.com'))
         expect(result.success).toBe(false)
         expect(result.errors).toContain('HTTP status 404')
     })
 
     it('6. error handling: handles network layer errors', async () => {
-        ; (global.fetch as any).mockRejectedValueOnce(new Error('Network disconnected'))
+        fetchMock.mockRejectedValueOnce(new Error('Network disconnected'))
         const result = await scraper.execute(createMockSpec('http://example.com'))
         expect(result.success).toBe(false)
         expect(result.errors).toContain('Network disconnected')

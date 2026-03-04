@@ -8,7 +8,7 @@
 
 ### Gotchas
 - Drizzle ORM mock chaining in tests requires `where: vi.fn().mockReturnThis()` so that `.returning()` can properly execute during Vitest runs.
-- Make sure to correctly typecast return values from `execute` inside Vitest scripts for type coercion when relying on `any`.
+- Use typed output interfaces in test assertions instead of `as any` casts. Define small interfaces per test suite matching the worker's output shape.
 
 ## 2026-03-04 — Phase 10: Dashboard Components
 ### What changed
@@ -17,4 +17,17 @@
 - Discovered and fixed an orchestrator mapping oversight in `src/orchestrator/Jarvis.ts` left by OPUS where Typescript was correctly inferring that `string[]` cannot be implicitly defined as `TaskId[]`.
 
 ### Gotchas
-- When dealing with dynamic visualization charting from `recharts`, ensure TS formatters correctly cast inputs `(value: any) =>` due to `recharts` generic type mapping restrictions.
+- Recharts `Tooltip` formatter callbacks should omit explicit type annotations — TypeScript infers the correct `ValueType` from recharts generics. Do NOT use `: any`.
+- For dynamic property access on `unknown[]` items, use `as Record<string, unknown>` instead of `as any`.
+
+## 2026-03-04 — QA Remediation: Type Safety Hardening
+### What changed
+- Eliminated ALL `any` usage from GEMINI-owned production and test files
+- `BudgetVisualization.tsx`: Removed `: any` from recharts formatter params (TypeScript infers types)
+- `DataTransformer.ts`: Replaced 4× `as any` with `as Record<string, unknown>` for dynamic property access
+- `TaskDAGViewer.tsx`: Changed relative import to `@orchestrator/TaskDAG` path alias
+- Test files (ApiCaller, DataScraper, NotificationSender, SchemaValidator): Replaced all `as any` casts with typed `fetchMock` variables and output interfaces
+
+### Gotchas
+- Use `global.fetch = fetchMock as unknown as typeof fetch` pattern for typed fetch mocking (double-cast avoids `as any`)
+- Remaining `as any` in `Jarvis.ts` is OPUS-domain — do not modify

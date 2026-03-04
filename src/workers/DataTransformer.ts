@@ -40,7 +40,10 @@ export class DataTransformer implements IWorker {
                     const field = config['field'] as string
                     const value = config['value']
                     if (!field) throw new Error('config.field is required for filter')
-                    outputData = data.filter(item => item && typeof item === 'object' && (item as any)[field] === value)
+                    outputData = data.filter(item => {
+                        if (!item || typeof item !== 'object') return false
+                        return (item as Record<string, unknown>)[field] === value
+                    })
                     break
                 }
                 case 'map': {
@@ -49,7 +52,7 @@ export class DataTransformer implements IWorker {
                     if (!field || !target) throw new Error('config.field and config.target are required for map')
                     outputData = data.map(item => {
                         if (!item || typeof item !== 'object') return item
-                        const newItem = { ...item } as any
+                        const newItem: Record<string, unknown> = { ...(item as Record<string, unknown>) }
                         newItem[target] = newItem[field]
                         delete newItem[field]
                         return newItem
@@ -60,8 +63,9 @@ export class DataTransformer implements IWorker {
                     const field = config['field'] as string
                     if (!field) throw new Error('config.field is required for aggregate (sum)')
                     outputData = data.reduce((sum, item) => {
-                        if (item && typeof item === 'object' && typeof (item as any)[field] === 'number') {
-                            return sum + (item as any)[field]
+                        if (item && typeof item === 'object') {
+                            const fieldVal = (item as Record<string, unknown>)[field]
+                            if (typeof fieldVal === 'number') return sum + fieldVal
                         }
                         return sum
                     }, 0)

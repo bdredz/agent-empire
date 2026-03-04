@@ -71,7 +71,7 @@ export function BudgetVisualization({ businesses, agents }: BudgetVisualizationP
                                 <Tooltip
                                     cursor={{ fill: '#F3F4F6' }}
                                     contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                    formatter={(value: any) => [`$${Number(value).toFixed(2)}`, undefined]}
+                                    formatter={(value) => [`$${Number(value).toFixed(2)}`, undefined]}
                                 />
                                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                                 <Bar dataKey="Revenue" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
@@ -93,7 +93,7 @@ export function BudgetVisualization({ businesses, agents }: BudgetVisualizationP
                                 <PieChart>
                                     <Tooltip
                                         contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
-                                        formatter={(value: any) => [`$${Number(value).toFixed(2)} cost units`, 'Budget']}
+                                        formatter={(value) => [`$${Number(value).toFixed(2)} cost units`, 'Budget']}
                                     />
                                     <Legend iconType="circle" layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: '12px' }} />
                                     <Pie

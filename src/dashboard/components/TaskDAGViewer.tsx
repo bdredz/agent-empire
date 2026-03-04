@@ -1,5 +1,5 @@
 import React from 'react'
-import { TaskDAG, DAGNode, DAGNodeStatus } from '../../orchestrator/TaskDAG'
+import { TaskDAG, DAGNode, DAGNodeStatus } from '@orchestrator/TaskDAG'
 import { Network, CheckCircle2, CircleDashed, Loader2, AlertCircle, FastForward } from 'lucide-react'
 
 export interface TaskDAGViewerProps {
