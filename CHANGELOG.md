@@ -39,3 +39,12 @@ Format is strict — follow exactly.
 **Files created:** 17
 **Tests:** 45/45
 **Notes:** Implemented and tested all 8 requested single-purpose workers.
+
+### 2026-03-04 GEMINI — Phase 9 (partial): Tool Primitives
+**Branch:** agent/gemini/tool-primitives
+**Status:** PASS (for GEMINI portion)
+**Interfaces consumed:** McpEndpoint
+**Interfaces produced:** Database schemas, MCP endpoint definitions, operations
+**Files created:** 8
+**Tests:** 11/11
+**Notes:** Implemented ContentScheduler and AnalyticsCollector primitives. Waiting on CODEX to finish Phase 9.
