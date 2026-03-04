@@ -177,9 +177,9 @@ export class Jarvis implements IJarvis {
     return {
       goalId: dag.goalId,
       status,
-      completedNodes: completed,
-      failedNodes: failed,
-      skippedNodes: skipped,
+      completedNodes: completed as any,
+      failedNodes: failed as any,
+      skippedNodes: skipped as any,
       totalDuration: Date.now() - startTime,
     }
   }
@@ -209,7 +209,7 @@ export class Jarvis implements IJarvis {
       // Check if scores indicate partial progress
       const avgScore = evalResult.scores
         ? Object.values(evalResult.scores).reduce((a, b) => a + b, 0) /
-          Object.values(evalResult.scores).length
+        Object.values(evalResult.scores).length
         : 0
 
       if (avgScore > 0.5) {
