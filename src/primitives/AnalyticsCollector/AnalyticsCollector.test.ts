@@ -4,7 +4,17 @@ import { analyticsEventTable } from './schema'
 
 describe('AnalyticsCollectorOps', () => {
     let ops: AnalyticsCollectorOps
-    let dbMock: any
+    let dbMock: {
+        insert: ReturnType<typeof vi.fn>
+        values: ReturnType<typeof vi.fn>
+        returning: ReturnType<typeof vi.fn>
+        select: ReturnType<typeof vi.fn>
+        from: ReturnType<typeof vi.fn>
+        where: ReturnType<typeof vi.fn>
+        orderBy: ReturnType<typeof vi.fn>
+        limit: ReturnType<typeof vi.fn>
+        delete: ReturnType<typeof vi.fn>
+    }
 
     beforeEach(() => {
         dbMock = {
@@ -18,7 +28,7 @@ describe('AnalyticsCollectorOps', () => {
             limit: vi.fn().mockReturnThis(),
             delete: vi.fn().mockReturnThis(),
         }
-        ops = new AnalyticsCollectorOps(dbMock as any)
+        ops = new AnalyticsCollectorOps(dbMock as unknown as ConstructorParameters<typeof AnalyticsCollectorOps>[0])
     })
 
     it('1. happy path: trackEvent inserts row', async () => {

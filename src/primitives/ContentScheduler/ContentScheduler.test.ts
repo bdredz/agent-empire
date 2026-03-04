@@ -4,7 +4,17 @@ import { ContentScheduleStatus, scheduledContentTable } from './schema'
 
 describe('ContentSchedulerOps', () => {
     let ops: ContentSchedulerOps
-    let dbMock: any
+    let dbMock: {
+        insert: ReturnType<typeof vi.fn>
+        values: ReturnType<typeof vi.fn>
+        returning: ReturnType<typeof vi.fn>
+        select: ReturnType<typeof vi.fn>
+        from: ReturnType<typeof vi.fn>
+        where: ReturnType<typeof vi.fn>
+        delete: ReturnType<typeof vi.fn>
+        update: ReturnType<typeof vi.fn>
+        set: ReturnType<typeof vi.fn>
+    }
 
     beforeEach(() => {
         dbMock = {
@@ -18,7 +28,7 @@ describe('ContentSchedulerOps', () => {
             update: vi.fn().mockReturnThis(),
             set: vi.fn().mockReturnThis(),
         }
-        ops = new ContentSchedulerOps(dbMock as any)
+        ops = new ContentSchedulerOps(dbMock as unknown as ConstructorParameters<typeof ContentSchedulerOps>[0])
     })
 
     it('1. happy path: queueContent inserts into db and returns ID', async () => {
