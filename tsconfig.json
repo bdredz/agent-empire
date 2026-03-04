@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@factory/*": ["src/factory/*"],
+      "@governor/*": ["src/governor/*"],
+      "@eval/*": ["src/eval/*"],
+      "@mechanic/*": ["src/mechanic/*"],
+      "@orchestrator/*": ["src/orchestrator/*"],
+      "@workers/*": ["src/workers/*"],
+      "@primitives/*": ["src/primitives/*"],
+      "@dashboard/*": ["src/dashboard/*"],
+      "@librarian/*": ["src/librarian/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}
