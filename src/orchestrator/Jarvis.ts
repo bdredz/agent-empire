@@ -1,4 +1,4 @@
-import { EvalResult, EvalOutcome, ModelTier } from '@shared/types'
+import { EvalResult, EvalOutcome, ModelTier, TaskId } from '@shared/types'
 import {
   TaskDAG,
   ExecutionResult,
@@ -86,12 +86,12 @@ export class Jarvis implements IJarvis {
 
   async executeDAG(dag: TaskDAG): Promise<ExecutionResult> {
     const startTime = Date.now()
-    const completed: string[] = []
-    const failed: string[] = []
-    const skipped: string[] = []
+    const completed: TaskId[] = []
+    const failed: TaskId[] = []
+    const skipped: TaskId[] = []
 
     // Mutable copy of node statuses
-    const statuses = new Map(
+    const statuses = new Map<TaskId, DAGNodeStatus>(
       dag.nodes.map((n) => [n.taskId, n.status])
     )
 
@@ -177,9 +177,9 @@ export class Jarvis implements IJarvis {
     return {
       goalId: dag.goalId,
       status,
-      completedNodes: completed as any,
-      failedNodes: failed as any,
-      skippedNodes: skipped as any,
+      completedNodes: completed,
+      failedNodes: failed,
+      skippedNodes: skipped,
       totalDuration: Date.now() - startTime,
     }
   }
@@ -283,13 +283,13 @@ export class Jarvis implements IJarvis {
 
   private skipDependents(
     dag: TaskDAG,
-    failedId: string,
-    statuses: Map<string, DAGNodeStatus>,
-    skipped: string[]
+    failedId: TaskId,
+    statuses: Map<TaskId, DAGNodeStatus>,
+    skipped: TaskId[]
   ): void {
     for (const node of dag.nodes) {
       if (
-        node.dependencies.includes(failedId as any) &&
+        node.dependencies.includes(failedId) &&
         statuses.get(node.taskId) === DAGNodeStatus.Pending
       ) {
         statuses.set(node.taskId, DAGNodeStatus.Skipped)
