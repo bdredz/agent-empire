@@ -244,3 +244,16 @@ constructor(
 
 ### Gotchas
 - `Mechanic` now depends on optional manifest sinks; if not injected, deploy actions still execute but won’t persist manifests.
+
+## 2026-03-08 — Phase 15 Gemini: Telemetry & Dashboard Analytics
+### What changed
+- Added `TelemetryMinion` to track token burn rates, detect anomalies (spikes/sustained burns), calculate burn trends, and emit structured warnings.
+- Added `TokenBurnAnalyzer` to deterministically suggest budget overrides (expand/shrink) and tier (fast/frontier) based on historical usage percentiles.
+- Updated `EventFeed.tsx` to distinctly render and emphasize `budget.warning`, `eval.escalated`, and `circuit_breaker.tripped` telemetry events with custom styling.
+- Updated `BudgetVisualization.tsx` to include an overlaid Token Burn Analytics Bar/Line chart mapping usage over time and highlighting spike/burn anomalies.
+
+### Decisions
+- Kept `TokenBurnAnalyzer` purely deterministic without any LLM calls, strictly relying on configurable percentile/threshold heuristics from historical usage.
+
+### Gotchas
+- `IBudgetGovernor` does not naturally emit events under the `EventEmitter` model out-of-the-box in the same way `SystemEvent` works inside the minion; the minion relies on injected global emitter for `CircuitBreakerTripped`.
