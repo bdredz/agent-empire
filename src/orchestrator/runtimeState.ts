@@ -71,6 +71,16 @@ export function markNodeFailed(state: DispatcherState, nodeId: string): Dispatch
   }
 }
 
+export function markNodeRetryPending(state: DispatcherState, nodeId: string): DispatcherState {
+  return {
+    ...state,
+    failedNodeIds: removeValue(state.failedNodeIds, nodeId),
+    activeNodeIds: removeValue(state.activeNodeIds, nodeId),
+    waitingNodeIds: removeValue(state.waitingNodeIds, nodeId),
+    executionStatus: 'retrying',
+  }
+}
+
 export function incrementRetryCount(state: DispatcherState, nodeId: string): DispatcherState {
   const current = state.retryCounts[nodeId] ?? 0
   return {

@@ -11,6 +11,7 @@ import { EscalationEvaluator } from '@eval/EscalationEvaluator'
 import type { EscalationProvider, EscalationContext } from '@eval/EscalationEvaluator'
 import { EvalPipeline } from '@eval/EvalPipeline'
 import { Jarvis } from '@orchestrator/Jarvis'
+import { DispatcherMinion } from '@orchestrator/DispatcherMinion'
 import { Librarian } from '@librarian/Librarian'
 import type { ILibrarianStore } from '@librarian/Librarian'
 import { getConfig } from '@shared/config'
@@ -26,6 +27,7 @@ export interface Container {
   readonly mechanic: Mechanic
   readonly evalPipeline: EvalPipeline
   readonly jarvis: Jarvis
+  readonly dispatcher: DispatcherMinion
   readonly librarian: Librarian
 }
 
@@ -79,9 +81,10 @@ export function createContainer(
   const evalPipeline = new EvalPipeline(deterministic, llmCritic, escalation)
 
   const librarian = new Librarian(stubLibrarianStore)
-  const jarvis = new Jarvis(goalAnalyzer, taskExecutor)
+  const dispatcher = new DispatcherMinion(taskExecutor, governor, evalPipeline)
+  const jarvis = new Jarvis(goalAnalyzer, taskExecutor, {}, dispatcher)
 
   log.info('All components initialized')
 
-  return { factory, governor, mechanic, evalPipeline, jarvis, librarian }
+  return { factory, governor, mechanic, evalPipeline, jarvis, dispatcher, librarian }
 }

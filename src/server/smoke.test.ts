@@ -9,6 +9,7 @@ import { DeterministicEvaluator } from '@eval/DeterministicEvaluator'
 import { LlmCriticEvaluator } from '@eval/LlmCriticEvaluator'
 import { EscalationEvaluator } from '@eval/EscalationEvaluator'
 import { Jarvis } from '@orchestrator/Jarvis'
+import { DispatcherMinion } from '@orchestrator/DispatcherMinion'
 import { Librarian } from '@librarian/Librarian'
 import { Mechanic } from '@mechanic/Mechanic'
 import type { Container } from './container'
@@ -66,7 +67,8 @@ function createTestContainer(): Container {
 
     const goalAnalyzer = createStubGoalAnalyzer()
     const taskExecutor = createStubTaskExecutor()
-    const jarvis = new Jarvis(goalAnalyzer, taskExecutor)
+    const dispatcher = new DispatcherMinion(taskExecutor, governor, evalPipeline)
+    const jarvis = new Jarvis(goalAnalyzer, taskExecutor, {}, dispatcher)
 
     return {
         factory,
@@ -74,6 +76,7 @@ function createTestContainer(): Container {
         mechanic: stubMechanic,
         evalPipeline,
         jarvis,
+        dispatcher,
         librarian,
     }
 }

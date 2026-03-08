@@ -18,6 +18,8 @@ import {
   isPlanCompleted,
   markEscalated,
   markNodeCompleted,
+  markNodeFailed,
+  markNodeRetryPending,
 } from './runtimeState'
 
 function makeEnvelope(): PlanEnvelope {
@@ -135,6 +137,17 @@ describe('runtimeState', () => {
 
     expect(canRetryNode(once, 'task-root', envelope.escalationPolicy)).toBe(true)
     expect(canRetryNode(twice, 'task-root', envelope.escalationPolicy)).toBe(false)
+  })
+
+  it('returns failed nodes to retry-pending state', () => {
+    const envelope = makeEnvelope()
+    const initial = createDispatcherState(envelope)
+    const failed = markNodeFailed(initial, 'task-root')
+    const retrying = markNodeRetryPending(failed, 'task-root')
+
+    expect(failed.failedNodeIds).toContain('task-root')
+    expect(retrying.failedNodeIds).not.toContain('task-root')
+    expect(retrying.executionStatus).toBe('retrying')
   })
 
   it('marks escalation with reason', () => {

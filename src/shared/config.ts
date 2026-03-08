@@ -29,6 +29,11 @@ const configSchema = z.object({
   // Librarian
   librarianDedupThreshold: z.coerce.number().default(0.9),
   librarianDefaultTtlSec: z.coerce.number().default(86400),
+
+  // Runtime durability
+  checkpointStoreType: z.enum(['postgres', 'redis', 'none']).default('none'),
+  checkpointTtlMs: z.coerce.number().default(3600000),
+  waitConditionPollIntervalMs: z.coerce.number().default(5000),
 })
 
 export type AppConfig = z.infer<typeof configSchema>
@@ -55,6 +60,9 @@ export function loadConfig(): AppConfig {
     budgetTripRatio: process.env.BUDGET_TRIP_RATIO,
     librarianDedupThreshold: process.env.LIBRARIAN_DEDUP_THRESHOLD,
     librarianDefaultTtlSec: process.env.LIBRARIAN_DEFAULT_TTL_SEC,
+    checkpointStoreType: process.env.CHECKPOINT_STORE_TYPE,
+    checkpointTtlMs: process.env.CHECKPOINT_TTL_MS,
+    waitConditionPollIntervalMs: process.env.WAIT_CONDITION_POLL_INTERVAL_MS,
   })
 
   if (!result.success) {

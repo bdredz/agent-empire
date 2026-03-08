@@ -183,3 +183,19 @@ constructor(
 ### Gotchas
 - `IBudgetGovernor` did not have an explicit event emitter interface yet, blocking TelemetryMinion's implementation directly on that front.
 - `JSON.stringify` escapes quotes, which required careful regex crafting inside of tests for Injection/Secret leaks.
+
+## 2026-03-08 — Phase 12 Codex: Dispatcher Runtime + Container Wiring
+### What changed
+- Added `DispatcherMinion` runtime controller in `src/orchestrator/DispatcherMinion.ts` with deterministic scheduling, retries, wait/hibernate handling, and typed escalation triggers.
+- Added `src/orchestrator/DispatcherPlanRunner.ts` to keep dispatcher execution logic isolated and file sizes within limits.
+- Wired dispatcher into DI container (`src/server/container.ts`) and Jarvis constructor injection for plan handoff execution path.
+- Added `src/orchestrator/DispatcherMinion.test.ts` with 12 coverage scenarios (dependency ordering, retries, retry-limit escalation, budget escalation, pause/resume, concurrency, wait/hibernate, checkpoint serialization, unsafe/eval escalation).
+- Added checkpoint interface contract `src/runtime/checkpoints/ICheckpointStore.ts` and config fields for durability controls in `src/shared/config.ts`.
+- Updated `src/server/smoke.test.ts` and `runtimeState` tests to align with dispatcher wiring and retry-pending transitions.
+
+### Decisions
+- Kept checkpoint integration behind an optional store interface to avoid blocking current runtime while Wave 5 stores are implemented.
+- Preserved compatibility with existing routes/tests by adding dispatcher to container shape rather than replacing existing components.
+
+### Gotchas
+- Used a dedicated worktree (`../agent-empire-codex`) because the root repo had an unresolved merge state; all continuing Codex edits were performed in the worktree.
