@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import Link from 'next/link'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 
 interface RootLayoutProps {
   readonly children: ReactNode
@@ -24,7 +25,7 @@ export function RootLayout({ children }: RootLayoutProps): JSX.Element {
               </Link>
             </nav>
           </aside>
-          <main className="p-6">{children}</main>
+          <main className="p-6"><ErrorBoundary>{children}</ErrorBoundary></main>
         </div>
       </body>
     </html>
