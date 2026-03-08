@@ -1,9 +1,16 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { ArtifactId, KnowledgeEntry, createAgentId, createArtifactId } from '@shared/types'
+import {
+  ArtifactId,
+  KnowledgeEntry,
+  KnowledgeEntryV2,
+  createAgentId,
+  createArtifactId,
+} from '@shared/types'
 import { ILibrarianStore, Librarian, VectorMatch } from '@librarian/Librarian'
 
 class InMemoryLibrarianStore implements ILibrarianStore {
   private readonly entries = new Map<string, KnowledgeEntry>()
+  private readonly entriesV2 = new Map<string, KnowledgeEntryV2>()
 
   async save(entry: KnowledgeEntry): Promise<void> {
     this.entries.set(entry.id as string, entry)
@@ -42,6 +49,14 @@ class InMemoryLibrarianStore implements ILibrarianStore {
 
     return removed
   }
+
+  async saveV2(entry: KnowledgeEntryV2): Promise<void> {
+    this.entriesV2.set(entry.entryId, entry)
+  }
+
+  async listByTenantV2(tenantId: string): Promise<KnowledgeEntryV2[]> {
+    return Array.from(this.entriesV2.values()).filter((entry) => entry.tenantId === tenantId)
+  }
 }
 
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -78,6 +93,9 @@ describe('Librarian', () => {
     entryCounter = 0
     delete process.env.LIBRARIAN_DEDUP_THRESHOLD
     delete process.env.LIBRARIAN_DEFAULT_TTL_SEC
+    delete process.env.LIBRARIAN_ALLOWED_WRITERS
+    delete process.env.LIBRARIAN_MAX_RAW_CONTENT_LENGTH
+    delete process.env.LIBRARIAN_MAX_ATOMIC_FACTS
   })
 
   it('ingests valid entries and sets default TTL', async () => {
@@ -211,5 +229,158 @@ describe('Librarian', () => {
 
     const byTie = await librarian.resolveConflict(tieA.id, tieB.id)
     expect(byTie.strategy).toBe('deterministic_tie_break')
+  })
+
+  it('accepts V2 proposals via submitProposal', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = 'agent-writer'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    const result = await librarian.submitProposal({
+      proposalId: 'proposal-v2-1',
+      tenantId: 'tenant-1',
+      sourceAgentId: 'agent-writer',
+      kind: 'observation',
+      title: 'Dispatcher state',
+      rawContent: 'Dispatcher tracks retries. Dispatcher escalates after limits.',
+      summary: 'control plane behavior',
+      tags: ['runtime'],
+      confidence: 0.8,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+
+    expect(result.accepted).toBe(true)
+    expect(result.entryId).toBeDefined()
+  })
+
+  it('rejects unauthorized V2 proposal writers', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = 'agent-allowed'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    const result = await librarian.submitProposal({
+      proposalId: 'proposal-v2-2',
+      tenantId: 'tenant-1',
+      sourceAgentId: 'agent-denied',
+      kind: 'observation',
+      title: 'Forbidden write',
+      rawContent: 'This should not pass policy.',
+      summary: 'policy rejection path',
+      tags: [],
+      confidence: 0.6,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+
+    expect(result.accepted).toBe(false)
+    expect(result.reason).toBe('writer_not_allowed')
+  })
+
+  it('queries V2 entries with tenant and kind enforcement', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = '*'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    await librarian.submitProposal({
+      proposalId: 'proposal-v2-3',
+      tenantId: 'tenant-a',
+      sourceAgentId: 'agent-a',
+      kind: 'observation',
+      title: '[bu:bu-a] Runtime note',
+      rawContent: 'Worker emits proposals.',
+      summary: 'memory flow',
+      tags: [],
+      confidence: 0.8,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+    await librarian.submitProposal({
+      proposalId: 'proposal-v2-4',
+      tenantId: 'tenant-b',
+      sourceAgentId: 'agent-b',
+      kind: 'observation',
+      title: '[bu:bu-b] Isolated note',
+      rawContent: 'Other tenant data.',
+      summary: 'isolation',
+      tags: [],
+      confidence: 0.8,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+
+    const result = await librarian.queryV2('worker', {
+      tenantId: 'tenant-a',
+      businessUnitId: 'bu-a',
+      includeGlobalArchitecture: false,
+      maxFacts: 10,
+      maxTokens: 200,
+      allowedKinds: ['observation'],
+    })
+
+    expect(result).toHaveLength(1)
+    expect(result[0]?.tenantId).toBe('tenant-a')
+  })
+
+  it('enforces V2 retrieval token and fact limits', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = '*'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    await librarian.submitProposal({
+      proposalId: 'proposal-v2-5',
+      tenantId: 'tenant-1',
+      sourceAgentId: 'agent-a',
+      kind: 'observation',
+      title: 'Verbose entry',
+      rawContent: 'Fact one has many words. Fact two has many words too. Fact three remains extra.',
+      summary: 'limits',
+      tags: [],
+      confidence: 0.8,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+
+    const result = await librarian.queryV2('', {
+      tenantId: 'tenant-1',
+      includeGlobalArchitecture: false,
+      maxFacts: 2,
+      maxTokens: 7,
+      allowedKinds: ['observation'],
+    })
+
+    expect(result[0]?.atomicFacts.length).toBeLessThanOrEqual(2)
+  })
+
+  it('supports V2 supersession from repeated title updates', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = '*'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    const first = await librarian.submitProposal({
+      proposalId: 'proposal-v2-6',
+      tenantId: 'tenant-1',
+      sourceAgentId: 'agent-a',
+      kind: 'runbook',
+      title: 'Deploy runbook',
+      rawContent: 'Step one is prepare.',
+      summary: 'v1',
+      tags: [],
+      confidence: 0.9,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+    const second = await librarian.submitProposal({
+      proposalId: 'proposal-v2-7',
+      tenantId: 'tenant-1',
+      sourceAgentId: 'agent-a',
+      kind: 'runbook',
+      title: 'Deploy runbook',
+      rawContent: 'Step one is prepare. Step two is verify.',
+      summary: 'v2',
+      tags: [],
+      confidence: 0.9,
+      createdAt: '2026-03-08T00:00:00.000Z',
+    })
+
+    expect(first.accepted).toBe(true)
+    expect(second.accepted).toBe(true)
+    const entries = await store.listByTenantV2('tenant-1')
+    const latest = entries.find((entry) => entry.entryId === second.entryId)
+    expect(latest?.supersedesEntryId).toBe(first.entryId)
   })
 })

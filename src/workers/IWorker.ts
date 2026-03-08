@@ -1,4 +1,4 @@
-import { ModelTier, Capability, TaskSpec, ArtifactId, BudgetUsage } from '@shared/types'
+import { ModelTier, Capability, TaskSpec, ArtifactId, BudgetUsage, MemoryProposal } from '@shared/types'
 
 export interface IWorker {
   readonly name: string
@@ -12,5 +12,6 @@ export interface WorkerResult {
   readonly artifacts: ArtifactId[]
   readonly output: unknown  // typed per worker
   readonly usage: BudgetUsage
+  readonly memoryProposals?: MemoryProposal[]
   readonly errors?: string[]
 }
