@@ -1,5 +1,32 @@
 # Agent Empire: Project Memory
 
+## Phase Tracker
+
+```text
+PHASE 0: SCAFFOLD & TYPES              [PASS]        depends: none        owner: OPUS
+PHASE 1: AGENT FACTORY                [PASS]        depends: 0           owner: OPUS
+PHASE 2: BUDGET GOVERNOR              [PASS]        depends: 0           owner: CODEX
+PHASE 3: EVALUATION ENGINE            [PASS]        depends: 0,1         owner: OPUS+CODEX
+PHASE 4: MECHANIC AGENT               [PASS]        depends: 0,1         owner: CODEX
+PHASE 5: DASHBOARD SCAFFOLD           [PASS]        depends: 0           owner: CODEX
+PHASE 6: LIBRARIAN AGENT              [PASS]        depends: 0,1,3       owner: CODEX
+PHASE 7: JARVIS ORCHESTRATOR          [PASS]        depends: 1,2,3,4     owner: OPUS
+PHASE 8: WORKER TEMPLATES             [PASS]        depends: 0,1         owner: GEMINI
+PHASE 9: TOOL PRIMITIVES              [PASS]        depends: 0,4         owner: CODEX+GEMINI
+PHASE 10: DASHBOARD COMPONENTS        [PASS]        depends: 5,0         owner: GEMINI
+PHASE 11: INTEGRATION                 [PASS]        depends: all         owner: OPUS
+
+PRODUCTION HARDENING                  [PASS]        depends: 0-11        owner: ALL
+
+PHASE 12: CONTROL PLANE HARDENING     [IN_PROGRESS] depends: 7,6,2,3,4   owner: OPUS+CODEX
+PHASE 13: MEMORY SPINE & TENANCY      [NOT_STARTED] depends: 12,6        owner: CODEX
+PHASE 14: DURABILITY & CHECKPOINTING  [NOT_STARTED] depends: 12          owner: CODEX
+PHASE 15: TELEMETRY & AUDIT MINIONS   [NOT_STARTED] depends: 12,2,3      owner: CODEX+GEMINI
+PHASE 16: MECHANIC SAFETY HARDENING   [NOT_STARTED] depends: 12,4        owner: CODEX
+PHASE 17: DYNAMIC TOOL LOADING        [NOT_STARTED] depends: 12,8,9      owner: GEMINI
+PHASE 18: CAPABILITY MANIFESTS        [NOT_STARTED] depends: 13,16,9     owner: OPUS+CODEX
+```
+
 ## 2026-03-04 — Initial Phase Implementations by GEMINI
 ### What changed
 - Completed Phase 8 (Worker Templates): Created `IWorker` and implemented `DataScraper`, `Summarizer`, `GitCommitter`, `ContentFormatter`, `SchemaValidator`, `ApiCaller`, `NotificationSender`, and `DataTransformer` with 100% test coverage.
@@ -107,3 +134,13 @@
 - `AnthropicProvider` uses raw `fetch` to avoid needing `@anthropic-ai/sdk` as a dependency.
 - To test with real LLM: create `.env` with `ANTHROPIC_API_KEY=sk-ant-...` then `npm run dev`.
 
+## 2026-03-08 — Phase 15, 17, 18 (Partials)
+### What changed
+- **Phase 15 (AuditMinion, SecretLeakScanner, SchemaConformanceChecker)**: Created pre-screening agents to evaluate worker outputs before the EvalPipeline. Included regex and entropy-based secret scanning, Zod schema conformance checking, and safety checks.
+- **Phase 17 (ToolDiscoveryService, DomainToolRegistry)**: Created generic tool capabilities spanning discovering tools by domain/task type, avoiding LLM calls for deterministic retrieval.
+- **Phase 18 (ApiGateway Manifest)**: Initialized `src/primitives/ApiGateway/manifest.ts` factory for CapManifests.
+- **Status Update**: Logged blocked tasks in `GEMINI-ASSIGNMENT.md`. P2-G1, P2-G3, P2-G6, P2-G7 are blocked by CODEX completing P2-C5 (Dispatcher wired).
+
+### Gotchas
+- `IBudgetGovernor` did not have an explicit event emitter interface yet, blocking TelemetryMinion's implementation directly on that front.
+- `JSON.stringify` escapes quotes, which required careful regex crafting inside of tests for Injection/Secret leaks.
