@@ -41,3 +41,16 @@
 ### Gotchas
 - Use `Pick<PrimitiveDb, 'insert' | 'select'>` pattern to narrow the DB interface per-primitive rather than defining separate interfaces
 - `QueryChain<T>` uses default generic `T = Array<Record<string, unknown>>` so callers can omit the type parameter
+
+## 2026-03-08 — Production Hardening: Gemini Tasks T5/T7/T15
+
+### What changed
+- **T5 (README.md)**: Created project README (83 lines) with quickstart, project structure, agent roles, tech stack, and architecture sections. No emojis, no ASCII art.
+- **T7 (next.config.mjs)**: Created `src/dashboard/next.config.mjs` with `output: 'standalone'`, `ignoreBuildErrors: false`, `ignoreDuringBuilds: true` (ESLint only).
+- **T15 (Error Boundaries)**: Created `src/dashboard/components/ErrorBoundary.tsx` (React class component with 'use client' directive) and wrapped `{children}` in `src/dashboard/app/layout.tsx`.
+- All commits on branch `prod-hardening`.
+- Typecheck: PASS (0 errors). Tests: 180/180 PASS.
+
+### Gotchas
+- `prod-hardening` branch did not exist — created fresh from `agent/gemini/dashboard-components` after stashing local changes.
+- ErrorBoundary requires `'use client'` directive since React class-based error boundaries are client components only in Next.js 14 App Router.
