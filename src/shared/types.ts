@@ -138,17 +138,17 @@ export interface BudgetThresholdConfig {
 }
 
 export interface BudgetGovernorAgentState {
-  readonly budget: Budget
-  readonly usage: BudgetUsage
-  readonly status: AgentStatus
-  readonly circuitBreakerReason?: string
-  readonly circuitBreakerTrippedAt?: string
-  readonly budgetOverrideAttempts: number
+  budget: Budget
+  usage: BudgetUsage
+  status: AgentStatus
+  circuitBreakerReason?: string
+  circuitBreakerTrippedAt?: string
+  budgetOverrideAttempts: number
 }
 
 export interface BudgetGovernorState {
-  readonly agents: Record<string, BudgetGovernorAgentState>
-  readonly events: SystemEvent[]
+  agents: Record<string, BudgetGovernorAgentState>
+  events: SystemEvent[]
 }
 
 export const ChildBudgetPolicy = {
