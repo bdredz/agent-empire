@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint src/ --ext .ts,.tsx",
+    "lint": "eslint src/",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -42,6 +42,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^18.3.28",
     "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/parser": "^8.56.1",
     "eslint": "^8.0.0",
     "supertest": "^6.0.0",
     "tsx": "^4.0.0",
