@@ -199,3 +199,18 @@ constructor(
 
 ### Gotchas
 - Used a dedicated worktree (`../agent-empire-codex`) because the root repo had an unresolved merge state; all continuing Codex edits were performed in the worktree.
+
+## 2026-03-08 — Phase 14 Codex: Checkpoint Stores + Resumer + Wait Scheduler
+### What changed
+- Added `PostgresCheckpointStore` and `RedisCheckpointStore` implementations with full CRUD/list behavior and deterministic tests.
+- Added `WorkflowResumer` to rehydrate `DispatcherState`, validate checkpoint/envelope consistency, and escalate durability faults.
+- Added `WaitConditionScheduler` to register/tick waits, resolve external events, and persist waiting snapshots through checkpoint store.
+- Extended `WorkerTaskExecutor` with optional `ICheckpointStore` integration, saving checkpoints on success and failure paths.
+- Restored and extended `WorkerTaskExecutor.test.ts` with checkpoint coverage after a malformed append corrupted the file.
+
+### Decisions
+- Kept checkpoint persistence fail-fast in `WorkerTaskExecutor` when a checkpoint store is configured and `save()` throws.
+- Left checkpoint modules constructor-injected and infrastructure-agnostic (`PostgresCheckpointDb` and `RedisLike`) to avoid coupling runtime logic to specific clients.
+
+### Gotchas
+- `@runtime/*` path alias is not configured; runtime imports must be relative paths until aliases are expanded in `tsconfig.json`.

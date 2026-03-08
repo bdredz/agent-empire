@@ -6,6 +6,7 @@ import type { EvalPipeline } from '@eval/EvalPipeline'
 import type { TaskDAG, DAGNode } from './TaskDAG'
 import { DAGNodeStatus } from './TaskDAG'
 import type { ILibrarian } from '@librarian/ILibrarian'
+import type { ICheckpointStore } from '../runtime/checkpoints/ICheckpointStore'
 import {
     AgentRole,
     ModelTier,
@@ -114,6 +115,15 @@ function createMockLibrarian(): ILibrarian {
         resolveConflict: vi.fn(),
         submitProposal: vi.fn().mockResolvedValue({ accepted: true, entryId: 'entry-1' }),
         queryV2: vi.fn(),
+    }
+}
+
+function createMockCheckpointStore(): ICheckpointStore {
+    return {
+        save: vi.fn().mockResolvedValue(undefined),
+        load: vi.fn().mockResolvedValue(null),
+        list: vi.fn().mockResolvedValue([]),
+        delete: vi.fn().mockResolvedValue(undefined),
     }
 }
 
@@ -250,7 +260,6 @@ describe('WorkerTaskExecutor', () => {
 
         const result = await executor.executeNode(dag, 0)
 
-        // Should still succeed — budget recording failure is non-blocking
         expect(result.success).toBe(true)
         expect(throwingGovernor.recordUsage).toHaveBeenCalled()
     })
@@ -338,5 +347,53 @@ describe('WorkerTaskExecutor', () => {
 
         expect(result.success).toBe(false)
         expect(result.errorMessage).toContain('no Librarian is configured')
+    })
+
+    it('saves checkpoint after successful execution', async () => {
+        const checkpointStore = createMockCheckpointStore()
+        const executor = new WorkerTaskExecutor(mockGovernor, mockEvalPipeline, registry, agentId, undefined, checkpointStore)
+        const dag = makeDAG([makeNode()])
+
+        await executor.executeNode(dag, 0)
+
+        expect(checkpointStore.save).toHaveBeenCalled()
+        const saved = (checkpointStore.save as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0] as Record<string, unknown>
+        expect(saved.status).toBe('completed')
+    })
+
+    it('saves failed checkpoint when worker execution fails', async () => {
+        const checkpointStore = createMockCheckpointStore()
+        const failWorker: IWorker = {
+            name: 'fail-worker',
+            modelTier: ModelTier.Fast,
+            capabilities: [],
+            execute: vi.fn().mockResolvedValue(makeWorkerResult({ success: false, errors: ['Bad input'] })),
+        }
+        const workerRegistry: WorkerRegistry = new Map([[AgentRole.Worker, failWorker]])
+        const executor = new WorkerTaskExecutor(mockGovernor, mockEvalPipeline, workerRegistry, agentId, undefined, checkpointStore)
+
+        await executor.executeNode(makeDAG([makeNode()]), 0)
+
+        const saved = (checkpointStore.save as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0] as Record<string, unknown>
+        expect(saved.status).toBe('failed')
+    })
+
+    it('saves failed checkpoint when eval fails', async () => {
+        const checkpointStore = createMockCheckpointStore()
+        const failEval = createMockEvalPipeline(makeFailingPipelineResult())
+        const executor = new WorkerTaskExecutor(mockGovernor, failEval, registry, agentId, undefined, checkpointStore)
+
+        await executor.executeNode(makeDAG([makeNode()]), 0)
+
+        const saved = (checkpointStore.save as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0] as Record<string, unknown>
+        expect(saved.status).toBe('failed')
+    })
+
+    it('fails fast when checkpoint persistence throws', async () => {
+        const checkpointStore = createMockCheckpointStore()
+        checkpointStore.save = vi.fn().mockRejectedValue(new Error('checkpoint down'))
+        const executor = new WorkerTaskExecutor(mockGovernor, mockEvalPipeline, registry, agentId, undefined, checkpointStore)
+
+        await expect(executor.executeNode(makeDAG([makeNode()]), 0)).rejects.toThrow('checkpoint down')
     })
 })
