@@ -1,121 +1,80 @@
-# OPUS-ASSIGNMENT.md — Phases Assigned to Opus (Claude)
+# OPUS-ASSIGNMENT.md
+
+## Role
+
+You are OPUS. You are the architect. You build the components that require full system context, cross-cutting reasoning, and enforcement of hard guarantees. You also perform integration review of all work produced by CODEX and GEMINI.
+
+Read AGENTS.md first — it is the operating manual you wrote.
+
+**Rules:**
+- Import types ONLY from `src/shared/types.ts`
+- No `any`. No `@ts-ignore`. No `as any`.
+- Commit after each task. Run `npx tsc --noEmit && npx vitest run` to verify.
+- Always work in your assigned branch. Never push to main directly.
+- If BLOCKED, output the BLOCKED format from AGENTS.md Section 8 and move on.
 
 ---
 
-## YOUR ROLE
+## Build Phases (Original — All PASS)
 
-You are OPUS. You are the architect. You build the components
-that require full system context, cross-cutting reasoning, and
-enforcement of hard guarantees. You also perform integration
-review of all work produced by CODEX and GEMINI.
+| # | Phase | Branch | Tests | Status |
+|---|-------|--------|-------|--------|
+| 0 | Scaffold & Types | `main` | 0 | ✅ PASS |
+| 1 | Agent Factory | `agent/opus/factory` | 18 | ✅ PASS |
+| 3 | Evaluation Engine | `agent/opus/evaluation-engine` | 17 | ✅ PASS |
+| 7 | Jarvis Orchestrator | `agent/opus/jarvis` | 25 | ✅ PASS |
+| 11 | Integration | `main` | 10 | ✅ PASS |
 
-**Read AGENTS.md first.** It is the operating manual you wrote.
+### Key constraints per phase
 
----
-
-## YOUR ASSIGNED PHASES (in order)
-
-### Phase 0: Scaffold & Types — COMPLETE
-Core schemas frozen. All agents import from `src/shared/types.ts`.
-
-### Phase 1: Agent Factory
-**Branch:** `agent/opus/factory`
-**Priority:** CRITICAL — everything depends on this
-**Full spec:** See AGENTS.md Phase 1
-**Why you:** The Factory enforces the hard guarantees from the
-Infinite Glitch spec. Privilege escalation prevention, budget
-cascading, lineage immutability, and provenance hashing require
-reasoning about combinatorial constraint interactions that lower-tier
-models will get subtly wrong.
-
-### Phase 3: Evaluation Engine (architecture + escalation logic)
-**Branch:** `agent/opus/evaluation-engine`
-**Priority:** CRITICAL — quality gate for entire system
-**Full spec:** See AGENTS.md Phase 3
-**Why you:** The escalation logic (when to retry vs escalate vs
-HITL) requires judgment about failure modes. The staged pipeline
-design (deterministic → LLM critic → Opus → HITL) is an
-architectural decision with cascading cost and quality implications.
-**Note:** CODEX builds the DeterministicEvaluator implementation.
-You build the pipeline architecture, the LlmCriticEvaluator, the
-EscalationEvaluator, and the orchestration logic.
-
-### Phase 7: Jarvis Orchestrator
-**Branch:** `agent/opus/jarvis`
-**Priority:** HIGH — but intentionally late (needs Factory, Mechanic, Eval)
-**Full spec:** See AGENTS.md Phase 7
-**Why you:** Goal decomposition, task DAG construction, and the
-clarification protocol require frontier-level reasoning. The system
-prompt design and personality layer are nuanced prompt engineering
-that directly determines system behavior.
-
-### Phase 11: Integration
-**Branch:** `main` (after all PRs merged)
-**Priority:** FINAL
-**Full spec:** See AGENTS.md Phase 11
-**Why you:** Integration requires holding the full system in context
-and reasoning about cross-component interactions. You review all
-PRs from CODEX and GEMINI before merging.
+- **Phase 0 (Scaffold):** Core schemas frozen. All agents import from `src/shared/types.ts`.
+- **Phase 1 (Factory):** Enforces hard guarantees (privilege escalation prevention, budget cascading, lineage immutability, provenance hashing).
+- **Phase 3 (Eval Engine):** Staged pipeline design (Deterministic → LLM Critic → Hitl). Escalation logic requires judgment about failure modes.
+- **Phase 7 (Jarvis):** Goal decomposition, task DAG construction, and clarification protocol require frontier-level reasoning.
+- **Phase 11 (Integration):** 8 end-to-end flows. Reviews all PRs from CODEX and GEMINI before merging.
 
 ---
 
-## INTEGRATION REVIEW PROTOCOL
+## Production Hardening Tasks
+
+Branch: `prod-hardening`. All complete as of 2026-03-08.
+
+| # | Task | Wave | Depends On | Status |
+|---|------|------|------------|--------|
+| T9 | LlmGoalAnalyzer | 3 | None | ✅ PASS |
+| T10 | WorkerTaskExecutor | 3 | T9 | ✅ PASS |
+| T16 | Smoke Tests | 3 | T10 | ✅ PASS |
+| LW | Live LLM Wiring | 5 | All above | ✅ PASS |
+
+### Files created/modified per task
+
+**T9** — `src/orchestrator/LlmGoalAnalyzer.ts`. Injectable `LlmProvider`, zod validation of LLM JSON output, graceful fallback to single-node DAG on parse errors.
+**T10** — `src/orchestrator/WorkerTaskExecutor.ts`. Routes DAG nodes to Workers by assigned role via `WorkerRegistry`, runs EvalPipeline, records budget via Governor.
+**T16** — `src/server/smoke.test.ts`. 7 E2E tests for goal→DAG→execute lifecycle, agent CRUD, etc. (uses test container w/ stub providers).
+**Live Wiring (LW)** — `src/orchestrator/AnthropicProvider.ts`, `src/workers/ResearchWorker.ts`, `src/index.ts`. Built fetch-based Anthropic API provider and first concrete worker. Modified main entry point to auto-detect `ANTHROPIC_API_KEY` to wire real `LlmGoalAnalyzer` + `WorkerTaskExecutor` + `ResearchWorker`, or fall back to stubs.
+
+---
+
+## Integration Review Protocol
 
 When CODEX or GEMINI complete a phase and submit for review:
+1. **Type compliance:** Must import from `src/shared/types.ts` only.
+2. **Interface compliance:** Implementations must match interfaces exactly.
+3. **Security invariants:** No raw shell, no secrets in memory, no budget self-mod.
+4. **Test quality:** Error paths tested, edge cases covered, deterministic.
+5. **Architectural boundaries:** Business logic stays out of UI, agents don't hold secrets.
+6. **Verification:** Run full typecheck (`npx tsc --noEmit`) + test suite (`npx vitest run`) after merge.
 
-1. **Check type compliance.** Do they import from `src/shared/types.ts`
-   only? Any inline type definitions = reject.
-
-2. **Check interface compliance.** Do implementations match the
-   interfaces exactly? Any signature deviations = reject.
-
-3. **Check security invariants.** No raw shell, no eval, no secrets
-   in memory, no budget self-modification.
-
-4. **Check test quality.** Error paths tested first? Edge cases covered?
-   Deterministic? No network calls in unit tests?
-
-5. **Check architectural boundaries.** Business logic in UI? Agents
-   holding secrets? Workers spawning children? = reject.
-
-6. **Run full typecheck + test suite** after merge.
-
-If review fails: provide specific feedback in the PR, do not
-merge, return to the owning agent for fixes.
+If review fails: provide specific feedback, do not merge, return to owning agent for fixes.
 
 ---
 
-## PARALLEL EXECUTION MAP
+## Launch Prompt
 
 ```
-Week 1:
-  OPUS  → Phase 1 (Factory)
-  CODEX → Phase 2 (Governor) + Phase 5 (Dashboard Scaffold)
-  GEMINI → Phase 8 (Worker Templates, first 4)
-
-Week 2:
-  OPUS  → Phase 3 (Eval Engine) + review CODEX Phase 2
-  CODEX → Phase 4 (Mechanic) + review feedback fixes
-  GEMINI → Phase 8 (Worker Templates, remaining 4) + Phase 10 starts
-
-Week 3:
-  OPUS  → Phase 7 (Jarvis) + review CODEX Phase 4
-  CODEX → Phase 6 (Librarian) + Phase 9 (Tool Primitives)
-  GEMINI → Phase 10 (Dashboard Components) + Phase 9 (partial)
-
-Week 4:
-  OPUS  → Phase 11 (Integration) — merge all, end-to-end test
-  ALL   → Bug fixes, integration test failures, polish
-```
-
----
-
-## LAUNCH PROMPT (for yourself in future sessions)
-
-```
-Read AGENTS.md completely. Then read OPUS-ASSIGNMENT.md for your
-specific phase assignments. You are the architect. Build Phase 1
-(Agent Factory) first — it unblocks CODEX and GEMINI. Then proceed
-to Phase 3, Phase 7, and Phase 11 in order. Between your own phases,
-review PRs from CODEX and GEMINI using the Integration Review Protocol.
+Read AGENTS.md Sections 0-2. Then read OPUS-ASSIGNMENT.md.
+You are the architect. Execute any incomplete tasks. Follow the autonomous loop in AGENTS.md Section 2.1.
+Run `npx tsc --noEmit && npx vitest run` after each task.
+Between your own phases, review PRs from CODEX and GEMINI using the Integration Review Protocol.
+Continue until all tasks show PASS or are BLOCKED.
 ```
