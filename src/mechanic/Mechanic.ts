@@ -1,11 +1,11 @@
 import { z } from 'zod'
 import {
+  type CapabilityManifest,
   type BusinessId,
   type BusinessUnit,
   type MechanicAction,
   type MechanicRequest,
   type SystemEvent,
-  BusinessStatus,
   EventType,
 } from '@shared/types'
 import {
@@ -21,6 +21,9 @@ import { MechanicRequestValidator } from '@mechanic/MechanicRequestValidator'
 import { MechanicAuditLog } from '@mechanic/MechanicAuditLog'
 import { MechanicActionExecutor } from '@mechanic/MechanicActionExecutor'
 import { MechanicStateStore } from '@mechanic/MechanicStateStore'
+import { CapabilityManifestWriter } from '@librarian/CapabilityManifestWriter'
+import { InternalRegistry } from '@librarian/InternalRegistry'
+import { buildBusinessUnit, getRequiredString } from '@mechanic/MechanicBusinessUnitFactory'
 const DEFAULT_STATE_FILE = '.data/mechanic-state.json'
 const provisionRequestSchema = z.object({
   businessId: z.string().min(1),
@@ -42,6 +45,8 @@ export class Mechanic implements IMechanic {
     private readonly actionPolicy: ActionPolicy = new ActionPolicy(),
     private readonly requestValidator: MechanicRequestValidator = new MechanicRequestValidator(),
     private readonly auditLog: MechanicAuditLog = new MechanicAuditLog(),
+    private readonly manifestWriter?: CapabilityManifestWriter,
+    private readonly internalRegistry?: InternalRegistry,
   ) {
     this.actionExecutor = new MechanicActionExecutor(dockerProvisioner, databaseProvisioner, repoProvisioner)
     this.stateStore = new MechanicStateStore(stateFilePath ?? process.env.MECHANIC_STATE_FILE ?? DEFAULT_STATE_FILE)
@@ -60,6 +65,7 @@ export class Mechanic implements IMechanic {
 
     try {
       const data = await this.actionExecutor.execute(validation.request)
+      await this.emitManifestIfPresent(data)
       await this.recordAudit(request, 'executed')
       return this.buildResult(request, 'executed', 'Action executed', data)
     } catch (err) {
@@ -173,28 +179,11 @@ export class Mechanic implements IMechanic {
       timestamp: new Date().toISOString(),
     })
   }
-}
 
-function buildBusinessUnit(
-  request: ProvisionBusinessUnitRequest,
-  containerData: Record<string, unknown>,
-  repoData: Record<string, unknown>,
-): BusinessUnit {
-  return {
-    businessId: request.businessId,
-    name: request.name,
-    type: request.type,
-    status: BusinessStatus.Active,
-    containerId: getRequiredString(containerData, 'containerId'),
-    repoUrl: getRequiredString(repoData, 'repoUrl'),
-    assignedAgents: [],
-    createdAt: new Date().toISOString(),
-    metrics: { revenue30d: 0, costs30d: 0, activeAgents: 0, totalTasksCompleted: 0, failureRate: 0, uptimePercent: 100 },
+  private async emitManifestIfPresent(data: Record<string, unknown>): Promise<void> {
+    const manifest = data.manifest as CapabilityManifest | undefined
+    if (!manifest) return
+    if (this.internalRegistry) this.internalRegistry.upsert(manifest)
+    if (this.manifestWriter) await this.manifestWriter.write(manifest)
   }
-}
-
-function getRequiredString(data: Record<string, unknown>, key: string): string {
-  const value = data[key]
-  if (typeof value !== 'string' || value.length === 0) throw new Error(`Missing required result field: ${key}`)
-  return value
 }

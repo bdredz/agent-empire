@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   BusinessStatus,
   BusinessType,
@@ -16,6 +16,8 @@ import { DatabaseProvisioner } from '@mechanic/DatabaseProvisioner'
 import { DockerProvisioner } from '@mechanic/DockerProvisioner'
 import { Mechanic } from '@mechanic/Mechanic'
 import { RepoProvisioner } from '@mechanic/RepoProvisioner'
+import { CapabilityManifestWriter } from '@librarian/CapabilityManifestWriter'
+import { InternalRegistry } from '@librarian/InternalRegistry'
 
 const businessId = createBusinessId('business-1')
 
@@ -416,6 +418,50 @@ describe('Mechanic', () => {
 
     expect(result.status).toBe('rejected')
     expect(result.message).toContain('Unsafe content in payload')
+    rmSync(stateDir, { recursive: true, force: true })
+  })
+
+  it('emits capability manifests on deploy actions', async () => {
+    const stateDir = mkdtempSync(join(tmpdir(), 'mechanic-state-'))
+    const submitProposal = vi.fn().mockResolvedValue({ accepted: true, entryId: 'entry-1' })
+    const writer = new CapabilityManifestWriter({ submitProposal })
+    const registry = new InternalRegistry()
+    const mechanic = new Mechanic(
+      {
+        createContainer: async () => ({
+          containerId: '',
+          status: 'running' as const,
+          endpoints: {},
+          provisionedAt: new Date().toISOString(),
+        }),
+        startContainer: async () => {},
+        stopContainer: async () => {},
+        removeContainer: async () => {},
+        getContainerStatus: async () => 'running' as const,
+      },
+      { provisionDatabase: async () => ({ connectionString: '', databaseName: '', status: 'ready' }) },
+      { provisionRepo: async () => ({ repoUrl: '', defaultBranch: 'main', status: 'created' }) },
+      join(stateDir, 'state.json'),
+      undefined,
+      undefined,
+      undefined,
+      writer,
+      registry,
+    )
+
+    const result = await mechanic.executeRequest({
+      requestId: 'req-deploy',
+      tenantId: 'tenant-1',
+      businessUnitId: 'biz-1',
+      action: 'deploy_gateway',
+      payload: { serviceName: 'ApiGateway', baseUrl: 'https://api.example.com' },
+      approvedByPlanId: 'plan-1',
+      requestedByAgentId: 'agent-1',
+    })
+
+    expect(result.status).toBe('executed')
+    expect(submitProposal).toHaveBeenCalledOnce()
+    expect(registry.listByTenant('tenant-1')).toHaveLength(1)
     rmSync(stateDir, { recursive: true, force: true })
   })
 })

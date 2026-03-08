@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import {
+  type CapabilityManifest,
   type ContainerProvisionRequest,
   type DatabaseProvisionRequest,
   type MechanicRequest,
@@ -7,6 +8,7 @@ import {
   createBusinessId,
 } from '@shared/types'
 import type { IDatabaseProvisioner, IDockerProvisioner, IRepoProvisioner } from '@mechanic/IMechanic'
+import { nanoid } from 'nanoid'
 
 const containerPayloadSchema = z.union([
   z.object({ containerId: z.string().min(1) }),
@@ -40,6 +42,19 @@ const repoPayloadSchema = z.object({
   templateRepo: z.string().optional(),
 })
 
+const generateManifestPayloadSchema = z.object({
+  serviceName: z.string().min(1),
+  version: z.string().min(1),
+  baseUrl: z.string().url(),
+  authScheme: z.enum(['api_key', 'a402', 'oauth', 'internal_only']).default('internal_only'),
+  supportedOperations: z.array(z.string()).default([]),
+})
+
+const deployGatewayPayloadSchema = z.object({
+  serviceName: z.string().min(1),
+  baseUrl: z.string().url(),
+})
+
 export class MechanicActionExecutor {
   constructor(
     private readonly dockerProvisioner: IDockerProvisioner,
@@ -58,9 +73,11 @@ export class MechanicActionExecutor {
       case 'create_repo':
         return this.handleCreateRepo(request)
       case 'attach_network':
-      case 'generate_manifest':
-      case 'deploy_gateway':
         return { status: 'accepted', action: request.action }
+      case 'generate_manifest':
+        return { status: 'accepted', manifest: this.buildManifestFromGeneratePayload(request) }
+      case 'deploy_gateway':
+        return { status: 'accepted', manifest: this.buildManifestFromDeployPayload(request) }
       default:
         throw new Error(`Unsupported mechanic action: ${request.action}`)
     }
@@ -131,6 +148,37 @@ export class MechanicActionExecutor {
       status: result.status,
       repoUrl: result.repoUrl,
       defaultBranch: result.defaultBranch,
+    }
+  }
+
+  private buildManifestFromGeneratePayload(request: MechanicRequest): CapabilityManifest {
+    const payload = generateManifestPayloadSchema.parse(request.payload)
+    return {
+      manifestId: `manifest-${nanoid()}`,
+      tenantId: request.tenantId,
+      businessUnitId: request.businessUnitId,
+      serviceName: payload.serviceName,
+      version: payload.version,
+      baseUrl: payload.baseUrl,
+      authScheme: payload.authScheme,
+      supportedOperations: payload.supportedOperations,
+      createdAt: new Date().toISOString(),
+    }
+  }
+
+  private buildManifestFromDeployPayload(request: MechanicRequest): CapabilityManifest {
+    const payload = deployGatewayPayloadSchema.parse(request.payload)
+    return {
+      manifestId: `manifest-${nanoid()}`,
+      tenantId: request.tenantId,
+      businessUnitId: request.businessUnitId,
+      serviceName: payload.serviceName,
+      version: '1.0.0',
+      baseUrl: payload.baseUrl,
+      authScheme: 'internal_only',
+      supportedOperations: ['invoke'],
+      healthcheckUrl: `${payload.baseUrl}/health`,
+      createdAt: new Date().toISOString(),
     }
   }
 }

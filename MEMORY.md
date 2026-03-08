@@ -229,3 +229,18 @@ constructor(
 
 ### Gotchas
 - Mechanic request payloads are validated as plain objects; branded IDs are reconstructed in action execution when calling provisioners.
+
+## 2026-03-08 — Phase 18 Codex: Capability Manifest Indexing
+### What changed
+- Added `CapabilityManifestWriter` and `InternalRegistry` with tests for proposal writing and tenant/business/service lookup.
+- Added `createCapabilityManifestProposal` in `Librarian.ts` so capability manifests are normalized into `MemoryProposal` records.
+- Added `MechanicActionExecutor` manifest emission for `generate_manifest` and `deploy_gateway` actions.
+- Wired `Mechanic` to upsert emitted manifests into `InternalRegistry` and submit them through `CapabilityManifestWriter`.
+- Updated container wiring to provide `CapabilityManifestWriter` + `InternalRegistry` to `Mechanic`.
+
+### Decisions
+- Kept capability publication as structured JSON proposal writes (`kind: capability_manifest`) rather than narrative memory ingestion.
+- Preserved backward compatibility by keeping existing mechanic APIs while adding manifest emission on deploy-related actions.
+
+### Gotchas
+- `Mechanic` now depends on optional manifest sinks; if not injected, deploy actions still execute but won’t persist manifests.

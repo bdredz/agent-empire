@@ -13,6 +13,8 @@ import { EvalPipeline } from '@eval/EvalPipeline'
 import { Jarvis } from '@orchestrator/Jarvis'
 import { DispatcherMinion } from '@orchestrator/DispatcherMinion'
 import { Librarian } from '@librarian/Librarian'
+import { CapabilityManifestWriter } from '@librarian/CapabilityManifestWriter'
+import { InternalRegistry } from '@librarian/InternalRegistry'
 import type { ILibrarianStore } from '@librarian/Librarian'
 import { getConfig } from '@shared/config'
 import { createChildLogger } from '@shared/logger'
@@ -70,17 +72,30 @@ export function createContainer(
   const factory = new AgentFactory()
   const governor = new BudgetGovernor(config.budgetStateFile)
 
+  const librarian = new Librarian(stubLibrarianStore)
+  const capabilityRegistry = new InternalRegistry()
+  const manifestWriter = new CapabilityManifestWriter(librarian)
+
   const docker = new DockerProvisioner()
   const database = new DatabaseProvisioner(stubDatabaseExecutor)
   const repo = new RepoProvisioner(config.githubOrg)
-  const mechanic = new Mechanic(docker, database, repo, config.mechanicStateFile)
+  const mechanic = new Mechanic(
+    docker,
+    database,
+    repo,
+    config.mechanicStateFile,
+    undefined,
+    undefined,
+    undefined,
+    manifestWriter,
+    capabilityRegistry,
+  )
 
   const deterministic = new DeterministicEvaluator()
   const llmCritic = new LlmCriticEvaluator(stubLlmCriticProvider)
   const escalation = new EscalationEvaluator(stubEscalationProvider)
   const evalPipeline = new EvalPipeline(deterministic, llmCritic, escalation)
 
-  const librarian = new Librarian(stubLibrarianStore)
   const dispatcher = new DispatcherMinion(taskExecutor, governor, evalPipeline)
   const jarvis = new Jarvis(goalAnalyzer, taskExecutor, {}, dispatcher)
 

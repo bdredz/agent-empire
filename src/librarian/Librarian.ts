@@ -1,4 +1,11 @@
-import { ArtifactId, KnowledgeEntry, KnowledgeEntryV2, MemoryProposal, RetrievalPolicy } from '@shared/types'
+import {
+  ArtifactId,
+  CapabilityManifest,
+  KnowledgeEntry,
+  KnowledgeEntryV2,
+  MemoryProposal,
+  RetrievalPolicy,
+} from '@shared/types'
 import {
   ILibrarian,
   IngestResult,
@@ -174,4 +181,20 @@ export class Librarian implements ILibrarian {
     this.fallbackV2Store.set(entry.entryId, entry)
   }
 
+}
+
+export function createCapabilityManifestProposal(manifest: CapabilityManifest): MemoryProposal {
+  return {
+    proposalId: manifest.manifestId,
+    tenantId: manifest.tenantId,
+    businessUnitId: manifest.businessUnitId,
+    sourceAgentId: 'mechanic',
+    kind: 'capability_manifest',
+    title: `${manifest.serviceName} capability manifest`,
+    rawContent: JSON.stringify(manifest),
+    summary: `${manifest.serviceName} ${manifest.version} at ${manifest.baseUrl}`,
+    tags: ['capability_manifest', manifest.serviceName, manifest.authScheme],
+    confidence: typeof manifest.reliabilityScore === 'number' ? Math.min(1, Math.max(0, manifest.reliabilityScore / 100)) : 0.9,
+    createdAt: manifest.createdAt,
+  }
 }
