@@ -6,11 +6,13 @@ import {
   TaskPriority,
   createTaskId,
   TaskId,
+  EscalationReason,
 } from '@shared/types'
 import { Jarvis, JarvisConfig } from './Jarvis'
 import { GoalAnalyzer, GoalAnalysis, TaskExecutor, ClarificationRequest } from './IJarvis'
 import { TaskDAG, DAGNode, DAGNodeStatus, ExecutionResult } from './TaskDAG'
 import { CompletenessField, COMPLETENESS_FIELDS } from './systemPrompt'
+import type { IDispatcher } from './IDispatcher'
 
 // ---------------------------------------------------------------------------
 // Test Helpers — mock factories
@@ -644,6 +646,116 @@ describe('Jarvis Orchestrator', () => {
       expect(result.filledCount).toBe(3) // objective, scope, audience
       expect(result.totalFields).toBe(10)
       expect(result.completenessRatio).toBeCloseTo(0.3)
+    })
+  })
+
+  // =========================================================================
+  // Phase 2 — PlanEnvelope behavior
+  // =========================================================================
+
+  describe('Phase 2 — PlanEnvelope behavior', () => {
+    function mockDispatcher(): IDispatcher {
+      return {
+        accept: vi.fn().mockResolvedValue(undefined),
+        getState: vi.fn(),
+        pause: vi.fn(),
+        resume: vi.fn(),
+        escalate: vi.fn().mockResolvedValue(undefined),
+      }
+    }
+
+    it('createPlan produces a valid PlanEnvelope with all required fields', async () => {
+      const dag = buildDAG([{ id: 'n1', name: 'Step 1' }])
+      const analyzer = mockAnalyzer(fullAnalysis(), dag)
+      const jarvis = new Jarvis(analyzer, succeedingExecutor())
+
+      const envelope = await jarvis.createPlan('Build a website', 'tenant-abc')
+
+      expect(typeof envelope.planId).toBe('string')
+      expect(envelope.planId.length).toBeGreaterThan(0)
+      expect(typeof envelope.goalId).toBe('string')
+      expect(envelope.goalId.length).toBeGreaterThan(0)
+      expect(envelope.tenantId).toBe('tenant-abc')
+      expect(typeof envelope.createdAt).toBe('string')
+      expect(envelope.createdBy).toBeDefined()
+      expect(envelope.taskDag).toBeDefined()
+      expect(envelope.budgetEnvelope).toBeDefined()
+      expect(envelope.escalationPolicy).toBeDefined()
+      expect(envelope.retrievalPolicy).toBeDefined()
+    })
+
+    it('PlanEnvelope.escalationPolicy has sensible defaults', async () => {
+      const dag = buildDAG([{ id: 'n1', name: 'Step 1' }])
+      const analyzer = mockAnalyzer(fullAnalysis(), dag)
+      const jarvis = new Jarvis(analyzer, succeedingExecutor())
+
+      const envelope = await jarvis.createPlan('Build a service', 'tenant-xyz')
+      const policy = envelope.escalationPolicy
+
+      expect(policy.maxRetriesPerNode).toBeGreaterThan(0)
+      expect(policy.escalateOnBudgetTrip).toBe(true)
+      expect(policy.escalateOnEvalFailure).toBe(true)
+      expect(policy.escalateOnMechanicUnsafeAction).toBe(true)
+    })
+
+    it('PlanEnvelope.retrievalPolicy is scoped to the provided tenant', async () => {
+      const dag = buildDAG([{ id: 'n1', name: 'Step 1' }])
+      const analyzer = mockAnalyzer(fullAnalysis(), dag)
+      const jarvis = new Jarvis(analyzer, succeedingExecutor())
+
+      const tenantId = 'my-tenant-99'
+      const envelope = await jarvis.createPlan('Analyze data', tenantId)
+
+      expect(envelope.retrievalPolicy.tenantId).toBe(tenantId)
+      expect(envelope.retrievalPolicy.maxFacts).toBeGreaterThan(0)
+      expect(envelope.retrievalPolicy.maxTokens).toBeGreaterThan(0)
+      expect(Array.isArray(envelope.retrievalPolicy.allowedKinds)).toBe(true)
+      expect(envelope.retrievalPolicy.allowedKinds.length).toBeGreaterThan(0)
+    })
+
+    it('processGoal calls dispatcher.accept() when dispatcher is injected', async () => {
+      const dag = buildDAG([{ id: 'n1', name: 'Step 1' }])
+      const analyzer = mockAnalyzer(fullAnalysis(), dag)
+      const dispatcher = mockDispatcher()
+      const jarvis = new Jarvis(analyzer, succeedingExecutor(), {}, dispatcher)
+
+      await jarvis.processGoal('Build a website')
+
+      expect(dispatcher.accept).toHaveBeenCalledTimes(1)
+      const [calledEnvelope] = (dispatcher.accept as ReturnType<typeof vi.fn>).mock.calls[0] as [unknown]
+      expect(calledEnvelope).toMatchObject({
+        tenantId: 'default-tenant',
+        taskDag: expect.objectContaining({ goalId: dag.goalId }),
+      })
+    })
+
+    it('executeDAG delegates to dispatcher.accept() when dispatcher is injected and returns immediately', async () => {
+      const dag = buildDAG([{ id: 'n1', name: 'Step 1' }, { id: 'n2', name: 'Step 2', deps: ['n1'] }])
+      const analyzer = mockAnalyzer(fullAnalysis(), dag)
+      const dispatcher = mockDispatcher()
+      const jarvis = new Jarvis(analyzer, succeedingExecutor(), {}, dispatcher)
+
+      const result = await jarvis.executeDAG(dag)
+
+      expect(dispatcher.accept).toHaveBeenCalledTimes(1)
+      // Dispatcher owns execution — returns compat result immediately
+      expect(result.status).toBe('completed')
+      expect(result.goalId).toBe(dag.goalId)
+      expect(result.completedNodes).toHaveLength(0)
+    })
+
+    it('handleEscalation(planId, reason) calls dispatcher.escalate() when dispatcher is present', async () => {
+      const dag = buildDAG([{ id: 'n1', name: 'Step 1' }])
+      const analyzer = mockAnalyzer(fullAnalysis(), dag)
+      const dispatcher = mockDispatcher()
+      const jarvis = new Jarvis(analyzer, succeedingExecutor(), {}, dispatcher)
+
+      const reason: EscalationReason = 'node_retry_limit'
+      const result = await jarvis.handleEscalation('plan-abc-123', reason)
+
+      expect(dispatcher.escalate).toHaveBeenCalledTimes(1)
+      expect(dispatcher.escalate).toHaveBeenCalledWith('plan-abc-123', reason)
+      expect(result).toBeNull()
     })
   })
 })
