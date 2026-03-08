@@ -22,6 +22,18 @@ Format is strict — follow exactly.
 
 ## Log
 
+### [2026-03-08] [OPUS] — Phase 2: Task Distribution
+**Branch:** main (merged from claude/clever-austin)
+**Status:** PASS
+**Interfaces consumed:** All Phase 1 types from types.ts
+**Interfaces produced:** None (planning only)
+**Files created:** 0
+**Files modified:** 3 (CODEX-ASSIGNMENT.md, GEMINI-ASSIGNMENT.md, OPUS-ASSIGNMENT.md)
+**Tests:** N/A (documentation only)
+**Notes:** Distributed 44 Phase 2 tasks across CODEX (26), GEMINI (10), OPUS (8). All Phase 2 contracts already present in types.ts. Worktree lesson: always commit to main for cross-agent visibility.
+
+---
+
 ### 2026-03-04 OPUS — Phase 0: Scaffold & Types
 **Branch:** main
 **Status:** PASS

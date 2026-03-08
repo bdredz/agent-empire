@@ -1,5 +1,18 @@
 # Agent Empire: Project Memory
 
+## 2026-03-08 — Phase 2 Task Breakdown + Worktree Lesson
+### What changed
+- Created Phase 2 task breakdown across all agent assignment files:
+  - CODEX: 26 tasks (P2-C1 to P2-C26) — contract freeze, Dispatcher, memory spine, checkpointing, Mechanic safety, capability manifests
+  - GEMINI: 10 tasks (P2-G1 to P2-G10) — minions, dashboard updates, dynamic tool loading, ApiGateway manifest
+  - OPUS: 8 tasks (P2-O1 to P2-O8) — Jarvis handoff refactor, EvalPipeline/Governor hooks, integration tests
+- Merged `claude/clever-austin` worktree branch into `main` so all agents can read their assignments
+- Phase 2 contracts (P2-C1) already present in `src/shared/types.ts` — pre-done from AGENTS.md rewrite
+
+### Gotchas
+- **Worktree isolation**: Claude Code worktrees are invisible to CODEX/GEMINI/other agents. Any deliverable meant for other agents MUST be committed to `main`, not a worktree branch. Always ask: "can the target agent reach this file?"
+- Phase 12 tracker should be updated to reflect P2-C1 contracts are already frozen
+
 ## 2026-03-04 — Initial Phase Implementations by GEMINI
 ### What changed
 - Completed Phase 8 (Worker Templates): Created `IWorker` and implemented `DataScraper`, `Summarizer`, `GitCommitter`, `ContentFormatter`, `SchemaValidator`, `ApiCaller`, `NotificationSender`, and `DataTransformer` with 100% test coverage.
@@ -107,3 +120,17 @@
 - `AnthropicProvider` uses raw `fetch` to avoid needing `@anthropic-ai/sdk` as a dependency.
 - To test with real LLM: create `.env` with `ANTHROPIC_API_KEY=sk-ant-...` then `npm run dev`.
 
+## 2026-03-08 — Phase 2 Codex: Contracts + Memory Spine Foundation
+### What changed
+- Added Phase 2 shared contracts to `src/shared/types.ts` (ExecutionStatus/PlanEnvelope/DispatcherState, Memory V2, checkpoint, mechanic request, capability manifest).
+- Added dispatcher contracts/utilities: `src/orchestrator/IDispatcher.ts`, `src/orchestrator/runtimeState.ts`, and `src/orchestrator/runtimeState.test.ts`.
+- Added memory-spine modules with tests: `memoryTypes`, `MemoryPolicy`, `AtomicFactExtractor`, `RetrievalPolicyEnforcer`, and `MemoryProposalPipeline`.
+- Upgraded `ILibrarian`/`Librarian` to support V2 methods (`submitProposal`, `queryV2`) while preserving existing V1 ingest/query/prune/resolveConflict behavior.
+- Updated worker memory flow: `WorkerResult` now supports `memoryProposals`, and `WorkerTaskExecutor` routes proposals through `Librarian.submitProposal` with tests.
+
+### Decisions
+- Kept V2 storage backward-compatible by extending `ILibrarianStore` with optional `saveV2/listByTenantV2` and using an internal fallback map when adapters are missing.
+- Deferred Dispatcher wiring into `container.ts` (`P2-C5`) to avoid overlap with OPUS Jarvis handoff work (`P2-O1/P2-O2`).
+
+### Gotchas
+- `codex/phase-2-hardening` did not yet contain Phase 2 shared contracts; missing exports blocked typecheck until `src/shared/types.ts` was updated first.

@@ -1,4 +1,4 @@
-import { EvalResult, EvalOutcome, ModelTier, TaskId } from '@shared/types'
+import { EvalResult, EvalOutcome, ModelTier, TaskId, PlanEnvelope, EscalationReason } from '@shared/types'
 import {
   TaskDAG,
   ExecutionResult,
@@ -185,10 +185,25 @@ export class Jarvis implements IJarvis {
   }
 
   // -----------------------------------------------------------------------
-  // handleEscalation — decide what to do when evaluation fails
+  // handleEscalation — Phase 1: decide what to do when evaluation fails
+  //                    Phase 2: handle escalation from Dispatcher (stub)
   // -----------------------------------------------------------------------
 
-  async handleEscalation(evalResult: EvalResult): Promise<Resolution> {
+  handleEscalation(evalResult: EvalResult): Promise<Resolution>
+  handleEscalation(planId: string, reason: EscalationReason): Promise<PlanEnvelope | null>
+  async handleEscalation(
+    evalResultOrPlanId: EvalResult | string,
+    reason?: EscalationReason
+  ): Promise<Resolution | PlanEnvelope | null> {
+    // Phase 2 overload: planId + EscalationReason
+    if (typeof evalResultOrPlanId === 'string') {
+      // Stub — Phase 2 Dispatcher will own this path
+      void reason
+      return null
+    }
+
+    // Phase 1 overload: EvalResult -> Resolution
+    const evalResult = evalResultOrPlanId
     if (evalResult.outcome === EvalOutcome.Retry) {
       return {
         resolved: true,
@@ -232,6 +247,15 @@ export class Jarvis implements IJarvis {
       action: 'override',
       reasoning: `Evaluation passed: ${evalResult.reasoning}`,
     }
+  }
+
+  // -----------------------------------------------------------------------
+  // createPlan — Phase 2: create a PlanEnvelope for Dispatcher (stub)
+  // -----------------------------------------------------------------------
+
+  async createPlan(_goal: string, _tenantId: string): Promise<PlanEnvelope> {
+    // Stub — Phase 2 will implement full planning logic
+    throw new Error('createPlan: not yet implemented — Phase 2 Dispatcher required')
   }
 
   // -----------------------------------------------------------------------

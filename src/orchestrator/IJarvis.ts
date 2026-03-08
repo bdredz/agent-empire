@@ -1,4 +1,4 @@
-import { EvalResult } from '@shared/types'
+import { EvalResult, PlanEnvelope, EscalationPolicy, EscalationReason, RetrievalPolicy, Budget } from '@shared/types'
 import { TaskDAG, ExecutionResult } from './TaskDAG'
 import { CompletenessField } from './systemPrompt'
 
@@ -64,7 +64,18 @@ export interface NodeExecutionResult {
 
 export interface IJarvis {
   processGoal(goal: string): Promise<TaskDAG | ClarificationRequest>
+
+  /** @deprecated Phase 2: execution ownership moves to Dispatcher. Kept for backward compat. */
   executeDAG(dag: TaskDAG): Promise<ExecutionResult>
+
+  /** Phase 1: Handle escalation from eval result */
   handleEscalation(evalResult: EvalResult): Promise<Resolution>
+
+  /** Phase 2: Handle escalation from Dispatcher */
+  handleEscalation(planId: string, reason: EscalationReason): Promise<PlanEnvelope | null>
+
   clarify(goal: string): Promise<ClarificationRequest>
+
+  /** Phase 2: Jarvis creates a plan and hands off to Dispatcher */
+  createPlan(goal: string, tenantId: string): Promise<PlanEnvelope>
 }
