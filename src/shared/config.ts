@@ -10,6 +10,7 @@ const configSchema = z.object({
   githubOrg: z.string().default('agent-empire'),
   databaseUrl: z.string().optional(),
   redisUrl: z.string().optional(),
+  anthropicApiKey: z.string().optional(),
 
   // State persistence
   budgetStateFile: z.string().default('.data/governor-state.json'),
@@ -45,6 +46,7 @@ export function loadConfig(): AppConfig {
     githubOrg: process.env.GITHUB_ORG,
     databaseUrl: process.env.DATABASE_URL,
     redisUrl: process.env.REDIS_URL,
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
     budgetStateFile: process.env.BUDGET_GOVERNOR_STATE_FILE,
     mechanicStateFile: process.env.MECHANIC_STATE_FILE,
     jarvisApiUrl: process.env.JARVIS_API_URL,
