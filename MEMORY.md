@@ -42,6 +42,19 @@
 - Use `Pick<PrimitiveDb, 'insert' | 'select'>` pattern to narrow the DB interface per-primitive rather than defining separate interfaces
 - `QueryChain<T>` uses default generic `T = Array<Record<string, unknown>>` so callers can omit the type parameter
 
+## 2026-03-08 — Production Hardening (Codex Tasks)
+### What changed
+- Added `tsconfig.build.json` and switched `build` script to emit `dist/` via `tsc -p tsconfig.build.json`.
+- Added flat ESLint config in `eslint.config.mjs`, installed `@typescript-eslint/parser`, and normalized `lint` script to `eslint src/`.
+- Added containerization artifacts: `Dockerfile` (multi-stage), `docker-compose.yml` (api + pgvector + redis), and `.dockerignore`.
+- Added CI workflow at `.github/workflows/ci.yml` running typecheck, test, lint, and build on `push`/`pull_request` to `main`.
+
+### Decisions
+- Left Task 12 (`/health` + `/metrics` route update) pending because `src/server/routes.ts` is not present yet (Task 6 dependency missing on branch).
+
+### Gotchas
+- This branch already contained Wave 1 hardening commits from other agents (`logger`, `config`, `.env.example`); Codex changes were layered on top without rewriting those files.
+
 ## 2026-03-08 — Production Hardening: Gemini Tasks T5/T7/T15
 
 ### What changed
