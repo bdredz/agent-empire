@@ -1,3 +1,5 @@
+import type { TaskDAG } from '@orchestrator/TaskDAG'
+
 // =============================================================================
 // AGENT EMPIRE — CORE TYPE DEFINITIONS
 // =============================================================================
@@ -586,4 +588,162 @@ export interface RepoProvisionResult {
   readonly repoUrl: string
   readonly defaultBranch: string
   readonly status: 'created' | 'failed'
+}
+
+// -----------------------------------------------------------------------------
+// 18. PHASE 2 CONTRACTS (CONTROL PLANE, MEMORY, DURABILITY, SAFETY)
+// -----------------------------------------------------------------------------
+
+export type ExecutionStatus =
+  | 'planned'
+  | 'dispatching'
+  | 'running'
+  | 'waiting'
+  | 'retrying'
+  | 'escalated'
+  | 'completed'
+  | 'failed'
+  | 'hibernated'
+
+export interface EscalationPolicy {
+  maxRetriesPerNode: number
+  escalateOnBudgetTrip: boolean
+  escalateOnEvalFailure: boolean
+  escalateOnMechanicUnsafeAction: boolean
+}
+
+export type EscalationReason =
+  | 'node_retry_limit'
+  | 'budget_trip'
+  | 'eval_failure'
+  | 'unsafe_action'
+  | 'durability_fault'
+  | 'dependency_deadlock'
+  | 'manual_review_required'
+
+export interface PlanEnvelope {
+  planId: string
+  goalId: string
+  tenantId: string
+  createdAt: string
+  createdBy: AgentHandle
+  taskDag: TaskDAG
+  budgetEnvelope: Budget
+  escalationPolicy: EscalationPolicy
+  retrievalPolicy: RetrievalPolicy
+}
+
+export interface DispatcherState {
+  planId: string
+  tenantId: string
+  activeNodeIds: string[]
+  completedNodeIds: string[]
+  failedNodeIds: string[]
+  retryCounts: Record<string, number>
+  waitingNodeIds: string[]
+  executionStatus: ExecutionStatus
+  lastEscalationReason?: EscalationReason
+}
+
+export type MemoryKind =
+  | 'working_note'
+  | 'observation'
+  | 'memory_proposal'
+  | 'verified_pattern'
+  | 'runbook'
+  | 'capability_manifest'
+  | 'policy_record'
+  | 'incident_record'
+  | 'deprecated_knowledge'
+
+export interface MemoryProposal {
+  proposalId: string
+  tenantId: string
+  businessUnitId?: string
+  sourceAgentId: string
+  kind: MemoryKind
+  title: string
+  rawContent: string
+  summary: string
+  tags: string[]
+  confidence: number
+  sourceArtifacts?: string[]
+  createdAt: string
+}
+
+export interface KnowledgeEntryV2 {
+  entryId: string
+  tenantId: string
+  visibility: 'tenant' | 'global_architecture'
+  kind: MemoryKind
+  title: string
+  atomicFacts: string[]
+  sourceProposalIds: string[]
+  trustScore: number
+  freshnessScore: number
+  supersedesEntryId?: string
+  expiresAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RetrievalPolicy {
+  tenantId: string
+  businessUnitId?: string
+  includeGlobalArchitecture: boolean
+  maxFacts: number
+  maxTokens: number
+  allowedKinds: MemoryKind[]
+}
+
+export interface WorkflowCheckpoint {
+  checkpointId: string
+  planId: string
+  tenantId: string
+  status: ExecutionStatus
+  dispatcherState: DispatcherState
+  serializedNodeStates: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WaitCondition {
+  nodeId: string
+  reason: 'time_delay' | 'external_event' | 'rate_limit' | 'infra_outage'
+  resumeAt?: string
+  externalCorrelationId?: string
+}
+
+export type MechanicAction =
+  | 'start_container'
+  | 'stop_container'
+  | 'create_database'
+  | 'create_repo'
+  | 'attach_network'
+  | 'generate_manifest'
+  | 'deploy_gateway'
+
+export interface MechanicRequest {
+  requestId: string
+  tenantId: string
+  businessUnitId: string
+  action: MechanicAction
+  payload: Record<string, unknown>
+  approvedByPlanId: string
+  requestedByAgentId: string
+}
+
+export interface CapabilityManifest {
+  manifestId: string
+  tenantId: string
+  businessUnitId: string
+  serviceName: string
+  version: string
+  baseUrl: string
+  authScheme: 'api_key' | 'a402' | 'oauth' | 'internal_only'
+  openApiUrl?: string
+  healthcheckUrl?: string
+  supportedOperations: string[]
+  reliabilityScore?: number
+  createdAt: string
 }
