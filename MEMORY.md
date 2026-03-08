@@ -1,5 +1,32 @@
 # Agent Empire: Project Memory
 
+## 2026-03-08 — Phase 2 P2-O1 + P2-O2: Jarvis Handoff Refactor
+### What changed
+- **P2-O1**: `IJarvis.ts` refactored — added `createPlan(goal, tenantId) → PlanEnvelope`, `handleEscalation(planId, reason) → PlanEnvelope|null`, `executeDAG` marked `@deprecated`
+- **P2-O2**: `Jarvis.ts` fully implements PlanEnvelope handoff:
+  - `createPlan()` — analyzes goal → decomposes → validates DAG → builds typed PlanEnvelope with defaults
+  - Constructor accepts optional `IDispatcher` (4th param, backward compat)
+  - `processGoal()` dispatches via `dispatcher.accept()` when injected
+  - `executeDAG()` delegates to dispatcher when available, preserves legacy execution loop
+  - `handleEscalation()` Phase 2 path wired to `dispatcher.escalate()`
+- 255/255 tests pass, typecheck clean
+- `IDispatcher` interface exists at `src/orchestrator/IDispatcher.ts` (created by CODEX)
+
+### Constructor signature (current)
+```typescript
+constructor(
+  goalAnalyzer: GoalAnalyzer,
+  taskExecutor: TaskExecutor,
+  config?: Partial<JarvisConfig>,
+  dispatcher?: IDispatcher
+)
+```
+
+### Gotchas
+- `AgentHandle` in `@shared/types` is the full factory output shape, NOT just `{agentId, role, modelTier}`. Building one requires `AgentRole`, `AgentStatus`, `MemoryMode`, `SandboxNetwork`, `createAgentId` imports.
+- `IDispatcher` is optional in constructor — tests without dispatcher still work via legacy execution path
+- `processGoal` still returns `TaskDAG | ClarificationRequest` — dispatcher dispatch is a side effect, not a return value change
+
 ## 2026-03-08 — Phase 2 Task Breakdown + Worktree Lesson
 ### What changed
 - Created Phase 2 task breakdown across all agent assignment files:

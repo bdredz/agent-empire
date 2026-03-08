@@ -179,6 +179,24 @@ Format is strict — follow exactly.
 **Tests:** 28/28 primitives passing, 145/145 total passing
 **Notes:** Extracted shared QueryChain and PrimitiveDb interfaces from 3 duplicated definitions into `src/primitives/db.ts`. Each primitive now imports from the shared module. LeadTracker uses full PrimitiveDb, ApiGateway uses `Pick<PrimitiveDb, 'insert'>`, WebhookManager uses `Pick<PrimitiveDb, 'insert' | 'select' | 'update'>`.
 
+### 2026-03-08 OPUS — Phase 12: P2-O1 + P2-O2 Jarvis Handoff Refactor
+**Branch:** main
+**Status:** PASS
+**Interfaces consumed:** PlanEnvelope, EscalationPolicy, EscalationReason, RetrievalPolicy, Budget, AgentHandle, MemoryKind, IDispatcher
+**Interfaces produced:** createPlan(), handleEscalation(Phase 2 overload)
+**Files modified:** 2 (src/orchestrator/IJarvis.ts, src/orchestrator/Jarvis.ts)
+**Tests:** 255/255
+**Notes:** P2-O1: IJarvis refactored with createPlan + handleEscalation overload + deprecated executeDAG. P2-O2: Jarvis implements full PlanEnvelope handoff — constructor accepts optional IDispatcher (4th param), processGoal dispatches when injected, executeDAG delegates when dispatcher present, handleEscalation wired to dispatcher.escalate(). All backward-compat preserved.
+
+### 2026-03-08 OPUS — Phase 2 Task Distribution
+**Branch:** main
+**Status:** PASS
+**Interfaces consumed:** N/A
+**Interfaces produced:** N/A
+**Files modified:** 3 (CODEX-ASSIGNMENT.md, GEMINI-ASSIGNMENT.md, OPUS-ASSIGNMENT.md)
+**Tests:** 255/255
+**Notes:** Distributed Phase 2 (Control Plane Hardening + Memory Spine) across agents: CODEX 26 tasks, GEMINI 10 tasks, OPUS 8 tasks. Initially committed to worktree branch — lesson learned: worktrees invisible to other agents, merged to main.
+
 ### 2026-03-08 CODEX — Production Hardening: Infrastructure & Tools
 **Branch:** prod-hardening
 **Status:** PASS
