@@ -20,6 +20,35 @@ Format is strict — follow exactly.
 
 ---
 
+## Phase Tracker
+
+```text
+PHASE 0: SCAFFOLD & TYPES              [PASS]        depends: none        owner: OPUS
+PHASE 1: AGENT FACTORY                [PASS]        depends: 0           owner: OPUS
+PHASE 2: BUDGET GOVERNOR              [PASS]        depends: 0           owner: CODEX
+PHASE 3: EVALUATION ENGINE            [PASS]        depends: 0,1         owner: OPUS+CODEX
+PHASE 4: MECHANIC AGENT               [PASS]        depends: 0,1         owner: CODEX
+PHASE 5: DASHBOARD SCAFFOLD           [PASS]        depends: 0           owner: CODEX
+PHASE 6: LIBRARIAN AGENT              [PASS]        depends: 0,1,3       owner: CODEX
+PHASE 7: JARVIS ORCHESTRATOR          [PASS]        depends: 1,2,3,4     owner: OPUS
+PHASE 8: WORKER TEMPLATES             [PASS]        depends: 0,1         owner: GEMINI
+PHASE 9: TOOL PRIMITIVES              [PASS]        depends: 0,4         owner: CODEX+GEMINI
+PHASE 10: DASHBOARD COMPONENTS        [PASS]        depends: 5,0         owner: GEMINI
+PHASE 11: INTEGRATION                 [PASS]        depends: all         owner: OPUS
+
+PRODUCTION HARDENING                  [PASS]        depends: 0-11        owner: ALL
+
+PHASE 12: CONTROL PLANE HARDENING     [IN_PROGRESS] depends: 7,6,2,3,4   owner: OPUS+CODEX
+PHASE 13: MEMORY SPINE & TENANCY      [NOT_STARTED] depends: 12,6        owner: CODEX
+PHASE 14: DURABILITY & CHECKPOINTING  [NOT_STARTED] depends: 12          owner: CODEX
+PHASE 15: TELEMETRY & AUDIT MINIONS   [NOT_STARTED] depends: 12,2,3      owner: CODEX+GEMINI
+PHASE 16: MECHANIC SAFETY HARDENING   [NOT_STARTED] depends: 12,4        owner: CODEX
+PHASE 17: DYNAMIC TOOL LOADING        [NOT_STARTED] depends: 12,8,9      owner: GEMINI
+PHASE 18: CAPABILITY MANIFESTS        [NOT_STARTED] depends: 13,16,9     owner: OPUS+CODEX
+```
+
+---
+
 ## Log
 
 ### [2026-03-08] [OPUS] — Phase 2: Task Distribution
@@ -262,3 +291,12 @@ Format is strict — follow exactly.
 **Files deleted:** 2 (PRODUCTION-PLAN-CODEX.md, PRODUCTION-PLAN-GEMINI.md)
 **Tests:** 216/216
 **Notes:** Avoided stale files by merging production hardening plans directly into the original agent assignment markdown files. Deleted standalone plan files. Clean, single-source of truth.
+
+### 2026-03-08 GEMINI — Phase 15 & 17 Implementation (Partial/Blocked)
+**Branch:** agent/gemini/phase-2-minions
+**Status:** PARTIAL_PASS / BLOCKED
+**Interfaces consumed:** IAuditMinion, ISchemaConformanceChecker, ISecretLeakScanner, IToolDiscoveryService, IDomainToolRegistry
+**Interfaces produced:** AuditVerdict, SecretFinding, ConformanceResult, ToolDefinition, LeanToolDescription
+**Files created:** 10 (src/minions/AuditMinion.ts, src/minions/AuditMinion.test.ts, src/minions/SecretLeakScanner.ts, src/minions/SecretLeakScanner.test.ts, src/minions/SchemaConformanceChecker.ts, src/minions/SchemaConformanceChecker.test.ts, src/tools/ToolDiscoveryService.ts, src/tools/ToolDiscoveryService.test.ts, src/tools/DomainToolRegistry.ts, src/tools/DomainToolRegistry.test.ts, src/primitives/ApiGateway/manifest.ts)
+**Tests:** 318/318 (approx)
+**Notes:** Implemented standalone components for Phase 15 (AuditMinion, SecretLeakScanner, SchemaConformanceChecker), Phase 17 (ToolDiscoveryService, DomainToolRegistry) and Phase 18 (ApiGateway Manifest). P2-G1, P2-G3, P2-G6, P2-G7 remain BLOCKED waiting for P2-C5 (Dispatcher wired) to be completed by CODEX.

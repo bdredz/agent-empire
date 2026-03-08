@@ -1,5 +1,6 @@
 # Agent Empire: Project Memory
 
+<<<<<<< HEAD
 ## 2026-03-08 — Phase 2 P2-O3: Jarvis PlanEnvelope Tests
 ### What changed
 - Added 6 new tests to `Jarvis.test.ts` in `describe('Phase 2 — PlanEnvelope behavior')`
@@ -50,7 +51,6 @@ constructor(
 ### Gotchas
 - **Worktree isolation**: Claude Code worktrees are invisible to CODEX/GEMINI/other agents. Any deliverable meant for other agents MUST be committed to `main`, not a worktree branch. Always ask: "can the target agent reach this file?"
 - Phase 12 tracker should be updated to reflect P2-C1 contracts are already frozen
-
 ## 2026-03-04 — Initial Phase Implementations by GEMINI
 ### What changed
 - Completed Phase 8 (Worker Templates): Created `IWorker` and implemented `DataScraper`, `Summarizer`, `GitCommitter`, `ContentFormatter`, `SchemaValidator`, `ApiCaller`, `NotificationSender`, and `DataTransformer` with 100% test coverage.
@@ -172,3 +172,14 @@ constructor(
 
 ### Gotchas
 - `codex/phase-2-hardening` did not yet contain Phase 2 shared contracts; missing exports blocked typecheck until `src/shared/types.ts` was updated first.
+
+## 2026-03-08 — Phase 15, 17, 18 (Partials, GEMINI)
+### What changed
+- **Phase 15 (AuditMinion, SecretLeakScanner, SchemaConformanceChecker)**: Created pre-screening agents to evaluate worker outputs before the EvalPipeline. Included regex and entropy-based secret scanning, Zod schema conformance checking, and safety checks.
+- **Phase 17 (ToolDiscoveryService, DomainToolRegistry)**: Created generic tool capabilities spanning discovering tools by domain/task type, avoiding LLM calls for deterministic retrieval.
+- **Phase 18 (ApiGateway Manifest)**: Initialized `src/primitives/ApiGateway/manifest.ts` factory for CapManifests.
+- **Status Update**: Logged blocked tasks in `GEMINI-ASSIGNMENT.md`. P2-G1, P2-G3, P2-G6, P2-G7 are blocked by CODEX completing P2-C5 (Dispatcher wired).
+
+### Gotchas
+- `IBudgetGovernor` did not have an explicit event emitter interface yet, blocking TelemetryMinion's implementation directly on that front.
+- `JSON.stringify` escapes quotes, which required careful regex crafting inside of tests for Injection/Secret leaks.
