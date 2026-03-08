@@ -67,3 +67,27 @@
 ### Gotchas
 - `prod-hardening` branch did not exist — created fresh from `agent/gemini/dashboard-components` after stashing local changes.
 - ErrorBoundary requires `'use client'` directive since React class-based error boundaries are client components only in Next.js 14 App Router.
+
+## 2026-03-08 — Production Hardening: OPUS Tasks T9/T10/T16 (via Gemini)
+
+### What changed
+- **T9 (LlmGoalAnalyzer)**: Created `src/orchestrator/LlmGoalAnalyzer.ts` — injectable `LlmProvider`, zod validation of LLM JSON output, graceful fallback to single-node DAG on parse/provider errors. Extracts completeness fields and decomposes goals into multi-node TaskDAGs with dependency wiring by index.
+- **T10 (WorkerTaskExecutor)**: Created `src/orchestrator/WorkerTaskExecutor.ts` — routes DAG nodes to Workers by `assignedRole` via `WorkerRegistry` (Map\<string, IWorker\>), runs EvalPipeline on output, records budget via Governor. Non-blocking on governor failures. Builds TaskSpec from DAGNode.
+- **T16 (smoke.test.ts)**: Created `src/server/smoke.test.ts` — 7 E2E tests: health check, goal→DAG→execute lifecycle, agent CRUD, metrics, knowledge query. Uses test container with stub providers (no Docker/DB needed).
+- 14 tests for LlmGoalAnalyzer, 11 tests for WorkerTaskExecutor, 7 smoke tests → 32 new tests.
+- Total: 212/212 tests, 23 test files, typecheck PASS, 0 `any`, 0 `@ts-ignore`.
+
+### Gotchas
+- `extractJson()` helper in LlmGoalAnalyzer tries direct parse, then markdown code block extraction, then brace-matching — handles real LLM output patterns.
+- Smoke test uses a stub mechanic cast (`as unknown as Mechanic`) because `Mechanic` constructor requires real provisioner deps; test only exercises API routes.
+- `WorkerTaskExecutor.governorAgentId` is optional — if omitted, budget recording is skipped (useful for tests).
+
+## 2026-03-08 — Production Hardening: HAIKU Task T11
+
+### What changed
+- **T11 (CORS + Rate Limiting Middleware)**: Implemented an in-memory Rate Limiter in `src/server/middleware.ts` using `Map<string, {count, resetAt}>`. Configured via `RATE_LIMIT_MAX` and `RATE_LIMIT_WINDOW_MS` environment variables. Protects endpoints by returning `429 Too Many Requests` when limits are exceeded. Includes a `setInterval` memory cleanup task to prevent memory leaks from inactive IPs.
+- Created `src/server/middleware.test.ts` with 4 tests verifying header injection, blocking functionality, IP isolation, and time-based resets.
+- Added 4 tests bringing total test count to 216/216. Typecheck passed.
+
+### Gotchas
+- The `setInterval` requires `.unref?.()` to prevent blocking process exit in Node, ensuring test runners like Vitest can exit cleanly without hanging.
