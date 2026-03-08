@@ -214,3 +214,18 @@ constructor(
 
 ### Gotchas
 - `@runtime/*` path alias is not configured; runtime imports must be relative paths until aliases are expanded in `tsconfig.json`.
+
+## 2026-03-08 — Phase 16 Codex: Mechanic Safety Hardening
+### What changed
+- Added `ActionPolicy`, `MechanicRequestValidator`, and `MechanicAuditLog` (with tests) to enforce whitelisted, validated, auditable mechanic requests.
+- Added `MechanicActionExecutor` and `MechanicStateStore` to keep `Mechanic.ts` bounded while routing actions through structured handlers.
+- Extended `IMechanic` with `executeRequest(request: MechanicRequest)` and `MechanicActionResult`.
+- Refactored `Mechanic.provisionBusinessUnit` to execute `create_database`, `create_repo`, and `start_container` via request-gated action execution.
+- Updated `DockerProvisioner` and `DatabaseProvisioner` to log operational failures explicitly.
+
+### Decisions
+- Kept `/api/businesses` compatibility by preserving `provisionBusinessUnit` while enforcing request validation/policy/audit under the hood.
+- Treated policy or payload failures as rejected actions (no implicit fallback execution).
+
+### Gotchas
+- Mechanic request payloads are validated as plain objects; branded IDs are reconstructed in action execution when calling provisioners.

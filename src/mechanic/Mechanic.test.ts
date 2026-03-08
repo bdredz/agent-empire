@@ -344,4 +344,78 @@ describe('Mechanic', () => {
     )
     rmSync(stateDir, { recursive: true, force: true })
   })
+
+  it('rejects non-whitelisted mechanic actions', async () => {
+    const stateDir = mkdtempSync(join(tmpdir(), 'mechanic-state-'))
+    const mechanic = new Mechanic(
+      {
+        createContainer: async () => ({
+          containerId: '',
+          status: 'running' as const,
+          endpoints: {},
+          provisionedAt: new Date().toISOString(),
+        }),
+        startContainer: async () => {},
+        stopContainer: async () => {},
+        removeContainer: async () => {},
+        getContainerStatus: async () => 'running' as const,
+      },
+      { provisionDatabase: async () => ({ connectionString: '', databaseName: '', status: 'ready' }) },
+      { provisionRepo: async () => ({ repoUrl: '', defaultBranch: 'main', status: 'created' }) },
+      join(stateDir, 'state.json'),
+    )
+
+    const result = await mechanic.executeRequest({
+      requestId: 'req-unsafe-action',
+      tenantId: 'tenant-1',
+      businessUnitId: 'biz-1',
+      action: 'unsafe_action' as unknown as 'create_database',
+      payload: {},
+      approvedByPlanId: 'plan-1',
+      requestedByAgentId: 'agent-1',
+    })
+
+    expect(result.status).toBe('rejected')
+    expect(result.message).toContain('not whitelisted')
+    rmSync(stateDir, { recursive: true, force: true })
+  })
+
+  it('rejects payloads with command injection markers', async () => {
+    const stateDir = mkdtempSync(join(tmpdir(), 'mechanic-state-'))
+    const mechanic = new Mechanic(
+      {
+        createContainer: async () => ({
+          containerId: '',
+          status: 'running' as const,
+          endpoints: {},
+          provisionedAt: new Date().toISOString(),
+        }),
+        startContainer: async () => {},
+        stopContainer: async () => {},
+        removeContainer: async () => {},
+        getContainerStatus: async () => 'running' as const,
+      },
+      { provisionDatabase: async () => ({ connectionString: '', databaseName: '', status: 'ready' }) },
+      { provisionRepo: async () => ({ repoUrl: '', defaultBranch: 'main', status: 'created' }) },
+      join(stateDir, 'state.json'),
+    )
+
+    const result = await mechanic.executeRequest({
+      requestId: 'req-command',
+      tenantId: 'tenant-1',
+      businessUnitId: 'biz-1',
+      action: 'create_repo',
+      payload: {
+        businessId: 'biz-1',
+        repoName: 'repo; rm -rf /',
+        isPrivate: true,
+      },
+      approvedByPlanId: 'plan-1',
+      requestedByAgentId: 'agent-1',
+    })
+
+    expect(result.status).toBe('rejected')
+    expect(result.message).toContain('Unsafe content in payload')
+    rmSync(stateDir, { recursive: true, force: true })
+  })
 })

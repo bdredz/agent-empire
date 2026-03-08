@@ -1,5 +1,6 @@
 import Docker from 'dockerode'
 import { z } from 'zod'
+import { createChildLogger } from '@shared/logger'
 import {
   ContainerProvisionRequest,
   ContainerProvisionResult,
@@ -45,6 +46,7 @@ const containerRequestSchema = z.object({
 })
 
 const allowedStatuses: ReadonlySet<string> = new Set(['created', 'running', 'paused', 'exited'])
+const log = createChildLogger('docker-provisioner')
 
 export class DockerProvisioner implements IDockerProvisioner {
   constructor(private readonly docker: DockerClient = new Docker()) {}
@@ -76,7 +78,8 @@ export class DockerProvisioner implements IDockerProvisioner {
         endpoints: this.extractEndpoints(inspect),
         provisionedAt: new Date().toISOString(),
       }
-    } catch {
+    } catch (err) {
+      log.error({ err, businessId: request.businessId }, 'Container provisioning failed')
       return {
         containerId: 'failed',
         status: 'failed',
@@ -106,7 +109,8 @@ export class DockerProvisioner implements IDockerProvisioner {
         return rawStatus as ContainerRuntimeStatus
       }
       return 'failed'
-    } catch {
+    } catch (err) {
+      log.warn({ err, containerId }, 'Container status lookup failed')
       return 'not_found'
     }
   }

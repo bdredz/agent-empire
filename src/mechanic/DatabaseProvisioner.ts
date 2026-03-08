@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { createChildLogger } from '@shared/logger'
 import {
   DatabaseProvisionRequest,
   DatabaseProvisionResult,
@@ -16,6 +17,7 @@ const databaseRequestSchema = z.object({
   maxConnections: z.number().int().positive(),
   maxSizeMb: z.number().int().positive(),
 })
+const log = createChildLogger('database-provisioner')
 
 export class DatabaseProvisioner implements IDatabaseProvisioner {
   constructor(private readonly executor: DatabaseExecutor) {}
@@ -35,7 +37,8 @@ export class DatabaseProvisioner implements IDatabaseProvisioner {
         databaseName,
         status: 'ready',
       }
-    } catch {
+    } catch (err) {
+      log.error({ err, businessId: request.businessId }, 'Database provisioning failed')
       return {
         connectionString: '',
         databaseName,

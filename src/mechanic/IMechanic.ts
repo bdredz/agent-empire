@@ -6,6 +6,8 @@ import {
   ContainerProvisionResult,
   DatabaseProvisionRequest,
   DatabaseProvisionResult,
+  MechanicAction,
+  MechanicRequest,
   RepoProvisionRequest,
   RepoProvisionResult,
   SystemEvent,
@@ -44,7 +46,16 @@ export interface ProvisionBusinessUnitRequest {
   readonly repo: RepoProvisionRequest
 }
 
+export interface MechanicActionResult {
+  readonly requestId: string
+  readonly action: MechanicAction
+  readonly status: 'executed' | 'rejected'
+  readonly message: string
+  readonly data?: Record<string, unknown>
+}
+
 export interface IMechanic {
+  executeRequest(request: MechanicRequest): Promise<MechanicActionResult>
   provisionBusinessUnit(request: ProvisionBusinessUnitRequest): Promise<BusinessUnit>
   getBusinessUnit(businessId: BusinessId): Promise<BusinessUnit | null>
   listEvents(): Promise<SystemEvent[]>
