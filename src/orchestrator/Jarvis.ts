@@ -1,4 +1,21 @@
-import { EvalResult, EvalOutcome, ModelTier, TaskId, PlanEnvelope, EscalationReason } from '@shared/types'
+import {
+  EvalResult,
+  EvalOutcome,
+  ModelTier,
+  TaskId,
+  PlanEnvelope,
+  EscalationReason,
+  AgentHandle,
+  Budget,
+  EscalationPolicy,
+  RetrievalPolicy,
+  MemoryKind,
+  AgentRole,
+  AgentStatus,
+  MemoryMode,
+  SandboxNetwork,
+  createAgentId,
+} from '@shared/types'
 import {
   TaskDAG,
   ExecutionResult,
@@ -14,6 +31,7 @@ import {
   GoalAnalyzer,
   TaskExecutor,
 } from './IJarvis'
+import type { IDispatcher } from './IDispatcher'
 import {
   evaluateCompleteness,
   CLARIFICATION_THRESHOLD,
@@ -51,7 +69,8 @@ export class Jarvis implements IJarvis {
   constructor(
     private readonly goalAnalyzer: GoalAnalyzer,
     private readonly taskExecutor: TaskExecutor,
-    config: Partial<JarvisConfig> = {}
+    config: Partial<JarvisConfig> = {},
+    private readonly dispatcher?: IDispatcher
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config }
   }
@@ -77,6 +96,11 @@ export class Jarvis implements IJarvis {
       )
     }
 
+    if (this.dispatcher && 'goalId' in dag) {
+      const envelope = await this.createPlan(goal, 'default-tenant')
+      await this.dispatcher.accept(envelope)
+    }
+
     return dag
   }
 
@@ -85,6 +109,22 @@ export class Jarvis implements IJarvis {
   // -----------------------------------------------------------------------
 
   async executeDAG(dag: TaskDAG): Promise<ExecutionResult> {
+    if (this.dispatcher) {
+      const envelope = await this.createPlan('execute-dag-compat', 'default-tenant')
+      // Override with actual dag
+      const patchedEnvelope = { ...envelope, taskDag: dag, goalId: dag.goalId }
+      await this.dispatcher.accept(patchedEnvelope)
+      // Return compat result - dispatcher owns execution now
+      return {
+        goalId: dag.goalId,
+        status: 'completed' as const,
+        completedNodes: [],
+        failedNodes: [],
+        skippedNodes: [],
+        totalDuration: 0,
+      }
+    }
+
     const startTime = Date.now()
     const completed: TaskId[] = []
     const failed: TaskId[] = []
@@ -197,8 +237,10 @@ export class Jarvis implements IJarvis {
   ): Promise<Resolution | PlanEnvelope | null> {
     // Phase 2 overload: planId + EscalationReason
     if (typeof evalResultOrPlanId === 'string') {
-      // Stub — Phase 2 Dispatcher will own this path
-      void reason
+      const planId = evalResultOrPlanId
+      if (this.dispatcher && reason !== undefined) {
+        await this.dispatcher.escalate(planId, reason)
+      }
       return null
     }
 
@@ -253,9 +295,77 @@ export class Jarvis implements IJarvis {
   // createPlan — Phase 2: create a PlanEnvelope for Dispatcher (stub)
   // -----------------------------------------------------------------------
 
-  async createPlan(_goal: string, _tenantId: string): Promise<PlanEnvelope> {
-    // Stub — Phase 2 will implement full planning logic
-    throw new Error('createPlan: not yet implemented — Phase 2 Dispatcher required')
+  async createPlan(goal: string, tenantId: string): Promise<PlanEnvelope> {
+    const analysis = await this.goalAnalyzer.analyzeGoal(goal)
+    const dag = await this.goalAnalyzer.decomposeGoal(goal, analysis)
+
+    const validation = validateDAG(dag)
+    if (!validation.valid) {
+      throw new Error(
+        `createPlan: invalid DAG: ${validation.errors.join('; ')}`
+      )
+    }
+
+    const createdBy: AgentHandle = {
+      agentId: createAgentId('jarvis'),
+      roleName: AgentRole.Orchestrator,
+      createdAt: new Date().toISOString(),
+      budgetAllocated: { maxTokens: 100_000, maxToolCalls: 50, maxWallTimeSec: 600 },
+      toolBundleResolved: {
+        tools: [],
+        sandbox: { network: SandboxNetwork.Restricted, filesystem: 'ephemeral' },
+      },
+      memoryPolicyResolved: {
+        mode: MemoryMode.Ephemeral,
+        allowedArtifactReads: [],
+        allowedArtifactWrites: [],
+      },
+      lineage: {
+        rootAgentId: createAgentId('jarvis'),
+        parentAgentId: null,
+        depth: 0,
+        spawnReason: 'orchestrator-init',
+        lineageContextRefs: [],
+      },
+      provenanceHash: nanoid(),
+      status: AgentStatus.Ready,
+      modelTier: this.config.modelTier,
+    }
+
+    const budgetEnvelope: Budget = {
+      maxTokens: 100_000,
+      maxToolCalls: 50,
+      maxWallTimeSec: 600,
+    }
+
+    const escalationPolicy: EscalationPolicy = {
+      maxRetriesPerNode: 3,
+      escalateOnBudgetTrip: true,
+      escalateOnEvalFailure: true,
+      escalateOnMechanicUnsafeAction: true,
+    }
+
+    const retrievalPolicy: RetrievalPolicy = {
+      tenantId,
+      includeGlobalArchitecture: true,
+      maxFacts: 50,
+      maxTokens: 10_000,
+      allowedKinds: ['working_note', 'observation', 'verified_pattern', 'runbook'] as MemoryKind[],
+    }
+
+    const envelope: PlanEnvelope = {
+      planId: nanoid(),
+      goalId: dag.goalId,
+      tenantId,
+      createdAt: new Date().toISOString(),
+      createdBy,
+      taskDag: dag,
+      budgetEnvelope,
+      escalationPolicy,
+      retrievalPolicy,
+    }
+
+    return envelope
   }
 
   // -----------------------------------------------------------------------
