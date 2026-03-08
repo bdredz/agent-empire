@@ -103,13 +103,13 @@ GEMINI owns deterministic minions (Phase 15), dashboard updates for telemetry/au
 
 | # | Task | Wave | Phase | Depends On | Status |
 |---|------|------|-------|------------|--------|
-| P2-G1 | Create `src/minions/TelemetryMinion.ts` + tests | 4 | 15 | P2-C5 (Dispatcher wired) | 🛑 BLOCKED:P2-C5 |
+| P2-G1 | Create `src/minions/TelemetryMinion.ts` + tests | 4 | 15 | P2-C5 (Dispatcher wired) | ✅ PASS |
 | P2-G2 | Create `src/minions/AuditMinion.ts` + tests | 4 | 15 | P2-C1 (contracts) | ✅ PASS |
-| P2-G3 | Create `src/minions/TokenBurnAnalyzer.ts` + tests | 4 | 15 | P2-G1 | 🛑 BLOCKED:P2-G1 |
+| P2-G3 | Create `src/minions/TokenBurnAnalyzer.ts` + tests | 4 | 15 | P2-G1 | ✅ PASS |
 | P2-G4 | Create `src/minions/SecretLeakScanner.ts` + tests | 4 | 15 | P2-G2 | ✅ PASS |
 | P2-G5 | Create `src/minions/SchemaConformanceChecker.ts` + tests | 4 | 15 | P2-G2 | ✅ PASS |
-| P2-G6 | Update `EventFeed.tsx` — render telemetry/audit events | 4 | 15 | P2-G1, P2-G2 | 🛑 BLOCKED:P2-G1 |
-| P2-G7 | Update `BudgetVisualization.tsx` — anomaly markers | 4 | 15 | P2-G3 | 🛑 BLOCKED:P2-G3 |
+| P2-G6 | Update `EventFeed.tsx` — render telemetry/audit events | 4 | 15 | P2-G1, P2-G2 | ✅ PASS |
+| P2-G7 | Update `BudgetVisualization.tsx` — anomaly markers | 4 | 15 | P2-G3 | ✅ PASS |
 | P2-G8 | Create `src/tools/ToolDiscoveryService.ts` + tests | 7 | 17 | P2-C5 | ✅ PASS |
 | P2-G9 | Create `src/tools/DomainToolRegistry.ts` + tests | 7 | 17 | P2-G8 | ✅ PASS |
 | P2-G10 | Create `src/primitives/ApiGateway/manifest.ts` | 8 | 18 | P2-C24 (CapManifestWriter) | ✅ PASS |

@@ -292,11 +292,12 @@ PHASE 18: CAPABILITY MANIFESTS        [NOT_STARTED] depends: 13,16,9     owner: 
 **Tests:** 216/216
 **Notes:** Avoided stale files by merging production hardening plans directly into the original agent assignment markdown files. Deleted standalone plan files. Clean, single-source of truth.
 
-### 2026-03-08 GEMINI — Phase 15 & 17 Implementation (Partial/Blocked)
-**Branch:** agent/gemini/phase-2-minions
-**Status:** PARTIAL_PASS / BLOCKED
-**Interfaces consumed:** IAuditMinion, ISchemaConformanceChecker, ISecretLeakScanner, IToolDiscoveryService, IDomainToolRegistry
-**Interfaces produced:** AuditVerdict, SecretFinding, ConformanceResult, ToolDefinition, LeanToolDescription
-**Files created:** 10 (src/minions/AuditMinion.ts, src/minions/AuditMinion.test.ts, src/minions/SecretLeakScanner.ts, src/minions/SecretLeakScanner.test.ts, src/minions/SchemaConformanceChecker.ts, src/minions/SchemaConformanceChecker.test.ts, src/tools/ToolDiscoveryService.ts, src/tools/ToolDiscoveryService.test.ts, src/tools/DomainToolRegistry.ts, src/tools/DomainToolRegistry.test.ts, src/primitives/ApiGateway/manifest.ts)
-**Tests:** 318/318 (approx)
-**Notes:** Implemented standalone components for Phase 15 (AuditMinion, SecretLeakScanner, SchemaConformanceChecker), Phase 17 (ToolDiscoveryService, DomainToolRegistry) and Phase 18 (ApiGateway Manifest). P2-G1, P2-G3, P2-G6, P2-G7 remain BLOCKED waiting for P2-C5 (Dispatcher wired) to be completed by CODEX.
+### 2026-03-08 GEMINI — Phase 15 & 17 Implementation (Complete)
+**Branch:** agent/gemini/phase-2-minions, agent/gemini/phase-2-telemetry-minion
+**Status:** PASS
+**Interfaces consumed:** IAuditMinion, ISchemaConformanceChecker, ISecretLeakScanner, IToolDiscoveryService, IDomainToolRegistry, ITelemetryMinion, ITokenBurnAnalyzer
+**Interfaces produced:** AuditVerdict, SecretFinding, ConformanceResult, ToolDefinition, LeanToolDescription, TelemetryAlert, BurnRate
+**Files created:** 14 (src/minions/AuditMinion.ts, src/minions/AuditMinion.test.ts, src/minions/SecretLeakScanner.ts, src/minions/SecretLeakScanner.test.ts, src/minions/SchemaConformanceChecker.ts, src/minions/SchemaConformanceChecker.test.ts, src/tools/ToolDiscoveryService.ts, src/tools/ToolDiscoveryService.test.ts, src/tools/DomainToolRegistry.ts, src/tools/DomainToolRegistry.test.ts, src/primitives/ApiGateway/manifest.ts, src/minions/TelemetryMinion.ts, src/minions/TelemetryMinion.test.ts, src/minions/TokenBurnAnalyzer.ts, src/minions/TokenBurnAnalyzer.test.ts)
+**Files modified:** 2 (src/dashboard/components/EventFeed.tsx, src/dashboard/components/BudgetVisualization.tsx)
+**Tests:** 333/333
+**Notes:** Implemented standalone components for Phase 15 and 17. Finalized P2-G1, P2-G3, P2-G6, P2-G7 after CODEX unblocked P2-C5. Dashboards now plot token burn spikes, budget warnings, and escalated evaluations with distinct emphasis and visualizations.
