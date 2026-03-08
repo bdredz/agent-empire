@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { BusinessUnit, AgentHandle } from '@shared/types'
 import {
     BarChart,
@@ -13,7 +13,13 @@ import {
     Pie,
     Cell,
 } from 'recharts'
-import { Wallet, TrendingUp } from 'lucide-react'
+import { Wallet, TrendingUp, Activity } from 'lucide-react'
+
+export interface TelemetryDataPoint {
+    time: string
+    tokens: number
+    alert?: 'spike' | 'sustained_high_burn'
+}
 
 export interface BudgetVisualizationProps {
     businesses: BusinessUnit[]
@@ -23,6 +29,26 @@ export interface BudgetVisualizationProps {
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6b7280']
 
 export function BudgetVisualization({ businesses, agents }: BudgetVisualizationProps) {
+    const [telemetryData, setTelemetryData] = useState<TelemetryDataPoint[]>([])
+
+    // Simulate fetching BudgetUsage overlaid with anomalies
+    useEffect(() => {
+        const fetchTelemetry = async () => {
+            // Simulated fetch - keeping Recharts as primary chart lib with annotations
+            const mockData: TelemetryDataPoint[] = [
+                { time: '10:00', tokens: 1200 },
+                { time: '10:05', tokens: 1500 },
+                { time: '10:10', tokens: 49000, alert: 'spike' },
+                { time: '10:15', tokens: 2500 },
+                { time: '10:20', tokens: 22000, alert: 'sustained_high_burn' },
+                { time: '10:25', tokens: 24000, alert: 'sustained_high_burn' },
+                { time: '10:30', tokens: 1800 },
+            ]
+            setTelemetryData(mockData)
+        }
+        fetchTelemetry()
+    }, [])
+
     // Aggregate revenue and cost by business
     const businessData = businesses.map(b => ({
         name: b.name,
@@ -34,8 +60,6 @@ export function BudgetVisualization({ businesses, agents }: BudgetVisualizationP
     // Aggregate cost units by agent role
     const costByRole = agents.reduce((acc, agent) => {
         const role = agent.roleName
-        // Fake usage calculation if agent usage isn't embedded directly in AgentHandle but we want visualization
-        // Here we'll just sum budgetAllocated.maxCostUnits for demo. In a real app we'd pass BudgetUsage map.
         const cost = agent.budgetAllocated.maxCostUnits || 0
         acc[role] = (acc[role] || 0) + cost
         return acc
@@ -47,8 +71,8 @@ export function BudgetVisualization({ businesses, agents }: BudgetVisualizationP
     }))
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                     <Wallet className="w-5 h-5 text-blue-600" />
                     Financial & Budget Overview
@@ -117,7 +141,6 @@ export function BudgetVisualization({ businesses, agents }: BudgetVisualizationP
                             </div>
                         )}
 
-                        {/* Center label for pie chart */}
                         {agentRoleData.length > 0 && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none pr-[120px]">
                                 <div className="text-center">
@@ -131,6 +154,62 @@ export function BudgetVisualization({ businesses, agents }: BudgetVisualizationP
                     </div>
                 </div>
             </div>
+
+            {/* Token Burn Analytics */}
+            {telemetryData.length > 0 && (
+                <div className="space-y-4 pt-6 border-t border-gray-100">
+                    <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-orange-500" />
+                        Token Burn Analytics
+                    </h3>
+                    <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={telemetryData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                                <XAxis dataKey="time" tick={{ fontSize: 12, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+                                <YAxis tick={{ fontSize: 12, fill: '#6B7280' }} tickLine={false} axisLine={false} />
+                                <Tooltip
+                                    cursor={{ fill: '#F3F4F6' }}
+                                    contentStyle={{ borderRadius: '8px', border: '1px solid #E5E7EB', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '12px' }}
+                                    content={({ active, payload, label }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0].payload as TelemetryDataPoint
+                                            return (
+                                                <div className="bg-white border border-gray-200 p-3 rounded-lg shadow-sm text-sm">
+                                                    <p className="text-gray-500 text-xs mb-2 font-medium">{label}</p>
+                                                    <p className="font-semibold text-gray-800 flex items-center gap-2">
+                                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                                        {data.tokens.toLocaleString()} Tokens
+                                                    </p>
+                                                    {data.alert === 'spike' && (
+                                                        <p className="text-red-600 font-bold mt-2 text-xs flex items-center gap-1">
+                                                            Alert: Token Spike
+                                                        </p>
+                                                    )}
+                                                    {data.alert === 'sustained_high_burn' && (
+                                                        <p className="text-orange-600 font-bold mt-2 text-xs flex items-center gap-1">
+                                                            Alert: Sustained High Burn
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )
+                                        }
+                                        return null
+                                    }}
+                                />
+                                <Bar dataKey="tokens" radius={[4, 4, 0, 0]} maxBarSize={40}>
+                                    {telemetryData.map((entry, index) => (
+                                        <Cell
+                                            key={`cell-tel-${index}`}
+                                            fill={entry.alert === 'spike' ? '#EF4444' : entry.alert === 'sustained_high_burn' ? '#F97316' : '#3B82F6'}
+                                        />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
