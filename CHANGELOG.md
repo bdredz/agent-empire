@@ -166,3 +166,60 @@ Format is strict — follow exactly.
 **Files modified:** 3 (LeadTracker/operations.ts, ApiGateway/operations.ts, WebhookManager/operations.ts)
 **Tests:** 28/28 primitives passing, 145/145 total passing
 **Notes:** Extracted shared QueryChain and PrimitiveDb interfaces from 3 duplicated definitions into `src/primitives/db.ts`. Each primitive now imports from the shared module. LeadTracker uses full PrimitiveDb, ApiGateway uses `Pick<PrimitiveDb, 'insert'>`, WebhookManager uses `Pick<PrimitiveDb, 'insert' | 'select' | 'update'>`.
+
+### 2026-03-08 CODEX — Production Hardening: Infrastructure & Tools
+**Branch:** prod-hardening
+**Status:** PASS
+**Interfaces consumed:** N/A
+**Interfaces produced:** N/A
+**Files created:** 5 (tsconfig.build.json, eslint.config.mjs, Dockerfile, docker-compose.yml, .github/workflows/ci.yml)
+**Tests:** 180/180
+**Notes:** Added `tsconfig.build.json` for compilation, flat ESLint config, multi-stage Dockerfile + compose (pgvector/redis), and GitHub Actions CI workflow covering typecheck, test, lint, and build.
+
+### 2026-03-08 GEMINI — Production Hardening: Dashboard & Docs
+**Branch:** prod-hardening
+**Status:** PASS
+**Interfaces consumed:** ReactNode
+**Interfaces produced:** ErrorBoundary
+**Files created:** 3 (README.md, src/dashboard/next.config.mjs, src/dashboard/components/ErrorBoundary.tsx)
+**Tests:** 180/180
+**Notes:** Added comprehensive README. Created `next.config.mjs` with standalone output. Added React class-based `ErrorBoundary` (client component) and wrapped `layout.tsx` children.
+
+### 2026-03-08 OPUS — Production Hardening: Orchestrator Real Implementations
+**Branch:** prod-hardening
+**Status:** PASS
+**Interfaces consumed:** LlmProvider, TaskDAG, BudgetUsage, IWorker, EvalResult
+**Interfaces produced:** GoalAnalyzer, TaskExecutor, AnthropicProvider
+**Files created:** 4 (src/orchestrator/LlmGoalAnalyzer.ts, src/orchestrator/WorkerTaskExecutor.ts, src/orchestrator/AnthropicProvider.ts, src/server/smoke.test.ts)
+**Tests:** 212/212
+**Notes:** Replaced stubs with `LlmGoalAnalyzer` (JSON validation + DAG fallback) and `WorkerTaskExecutor` (routes node execution by role, records budget, evaluates output). Built `AnthropicProvider` via standard `fetch`. Added 7 E2E smoke tests.
+
+### 2026-03-08 HAIKU — Production Hardening: Rate Limiting
+**Branch:** prod-hardening
+**Status:** PASS
+**Interfaces consumed:** Context, Next
+**Interfaces produced:** RateLimiter Middleware
+**Files created:** 1 (src/server/middleware.test.ts)
+**Files modified:** 1 (src/server/middleware.ts)
+**Tests:** 216/216
+**Notes:** Built in-memory IP-based rate limiter middleware configurable via `RATE_LIMIT_MAX` and `RATE_LIMIT_WINDOW_MS`. Includes `setInterval` cleanup with `.unref()` for test runner compatibility.
+
+### 2026-03-08 OPUS — Integration: Live LLM Wiring
+**Branch:** prod-hardening
+**Status:** PASS
+**Interfaces consumed:** LlmProvider, IWorker
+**Interfaces produced:** ResearchWorker
+**Files created:** 1 (src/workers/ResearchWorker.ts)
+**Files modified:** 2 (src/index.ts, src/shared/config.ts)
+**Tests:** 216/216
+**Notes:** Created first real worker: `ResearchWorker`. Added `anthropicApiKey` to config. Auto-detects `ANTHROPIC_API_KEY` on boot to dynamically wire real implementations (LlmGoalAnalyzer, WorkerTaskExecutor, ResearchWorker); falls back to stubs if absent.
+
+### 2026-03-08 SYSTEM — Assignment Consolidation & Cleanup
+**Branch:** prod-hardening
+**Status:** PASS
+**Interfaces consumed:** N/A
+**Interfaces produced:** N/A
+**Files modified:** 2 (CODEX-ASSIGNMENT.md, GEMINI-ASSIGNMENT.md)
+**Files deleted:** 2 (PRODUCTION-PLAN-CODEX.md, PRODUCTION-PLAN-GEMINI.md)
+**Tests:** 216/216
+**Notes:** Avoided stale files by merging production hardening plans directly into the original agent assignment markdown files. Deleted standalone plan files. Clean, single-source of truth.
