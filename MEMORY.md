@@ -91,3 +91,19 @@
 
 ### Gotchas
 - The `setInterval` requires `.unref?.()` to prevent blocking process exit in Node, ensuring test runners like Vitest can exit cleanly without hanging.
+
+## 2026-03-08 — Live Wiring: Stubs → Real LLM Orchestration
+
+### What changed
+- **AnthropicProvider** (`src/orchestrator/AnthropicProvider.ts`): Fetch-based `LlmProvider` implementation hitting Anthropic Messages API. No SDK dependency. Reads `ANTHROPIC_API_KEY` from config.
+- **ResearchWorker** (`src/workers/ResearchWorker.ts`): First concrete `IWorker` — sends task descriptions to LLM, returns markdown research output. Estimates token usage for budget tracking.
+- **Config** (`src/shared/config.ts`): Added `anthropicApiKey` optional field (maps to `ANTHROPIC_API_KEY` env var).
+- **index.ts**: Auto-detects `ANTHROPIC_API_KEY`. If present, builds real `LlmGoalAnalyzer` + `WorkerTaskExecutor` + `ResearchWorker`. If absent, falls back to stubs with a warning log.
+- Worker registry maps `Worker`, `Researcher`, and `Implementer` roles to `ResearchWorker` as a generic fallback.
+- 216/216 tests, 24 test files, typecheck PASS.
+
+### Gotchas
+- `Jarvis` stores `taskExecutor` as `private readonly` — no setter. So `WorkerTaskExecutor` must be constructed *before* `createContainer` and passed in directly.
+- `AnthropicProvider` uses raw `fetch` to avoid needing `@anthropic-ai/sdk` as a dependency.
+- To test with real LLM: create `.env` with `ANTHROPIC_API_KEY=sk-ant-...` then `npm run dev`.
+
