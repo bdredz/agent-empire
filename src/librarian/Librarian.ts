@@ -1,5 +1,17 @@
-import { ArtifactId, KnowledgeEntry } from '@shared/types'
-import { ILibrarian, IngestResult, PruneResult, QueryFilters, ResolutionResult } from '@librarian/ILibrarian'
+import { ArtifactId, KnowledgeEntry, KnowledgeEntryV2, MemoryProposal, RetrievalPolicy } from '@shared/types'
+import {
+  ILibrarian,
+  IngestResult,
+  PruneResult,
+  QueryFilters,
+  ResolutionResult,
+  SubmitProposalResult,
+} from '@librarian/ILibrarian'
+import { AtomicFactExtractor } from './AtomicFactExtractor'
+import { MemoryPolicy } from './MemoryPolicy'
+import { MemoryProposalPipeline, type IMemoryProposalStore } from './MemoryProposalPipeline'
+import { RetrievalPolicyEnforcer } from './RetrievalPolicyEnforcer'
+import { applyDefaultExpiry, findDuplicate, readEnvCsv, readEnvNumber } from './LibrarianUtils'
 
 export interface VectorMatch {
   readonly entry: KnowledgeEntry
@@ -12,18 +24,38 @@ export interface ILibrarianStore {
   searchByText(query: string, filters?: QueryFilters): Promise<KnowledgeEntry[]>
   searchByVector(embedding: number[], filters?: QueryFilters): Promise<VectorMatch[]>
   removeOlderThan(olderThanIso: string): Promise<ArtifactId[]>
+  saveV2?(entry: KnowledgeEntryV2): Promise<void>
+  listByTenantV2?(tenantId: string): Promise<KnowledgeEntryV2[]>
 }
 
 const DEFAULT_DEDUP_THRESHOLD = 0.92
 const DEFAULT_TTL_SEC = 7 * 24 * 60 * 60
+const DEFAULT_MAX_RAW_CONTENT_LENGTH = 12_000
+const DEFAULT_MAX_ATOMIC_FACTS = 20
 
 export class Librarian implements ILibrarian {
   private readonly dedupThreshold: number
   private readonly defaultTtlSec: number
+  private readonly fallbackV2Store = new Map<string, KnowledgeEntryV2>()
+  private readonly proposalPipeline: MemoryProposalPipeline
+  private readonly retrievalEnforcer: RetrievalPolicyEnforcer
 
   constructor(private readonly store: ILibrarianStore) {
-    this.dedupThreshold = this.readEnvNumber('LIBRARIAN_DEDUP_THRESHOLD', DEFAULT_DEDUP_THRESHOLD, 0, 1)
-    this.defaultTtlSec = this.readEnvNumber('LIBRARIAN_DEFAULT_TTL_SEC', DEFAULT_TTL_SEC, 1)
+    this.dedupThreshold = readEnvNumber('LIBRARIAN_DEDUP_THRESHOLD', DEFAULT_DEDUP_THRESHOLD, 0, 1)
+    this.defaultTtlSec = readEnvNumber('LIBRARIAN_DEFAULT_TTL_SEC', DEFAULT_TTL_SEC, 1)
+    const memoryPolicy = new MemoryPolicy({
+      allowedWriterIds: readEnvCsv('LIBRARIAN_ALLOWED_WRITERS', ['*']),
+      maxRawContentLength: readEnvNumber(
+        'LIBRARIAN_MAX_RAW_CONTENT_LENGTH',
+        DEFAULT_MAX_RAW_CONTENT_LENGTH,
+        1,
+      ),
+    })
+    const factExtractor = new AtomicFactExtractor({
+      maxFacts: readEnvNumber('LIBRARIAN_MAX_ATOMIC_FACTS', DEFAULT_MAX_ATOMIC_FACTS, 1),
+    })
+    this.retrievalEnforcer = new RetrievalPolicyEnforcer()
+    this.proposalPipeline = new MemoryProposalPipeline(memoryPolicy, factExtractor, this.createV2StoreAdapter())
   }
 
   public async ingest(entry: KnowledgeEntry): Promise<IngestResult> {
@@ -31,8 +63,8 @@ export class Librarian implements ILibrarian {
       return { accepted: false, reason: 'invalid' }
     }
 
-    const normalized = this.applyDefaultExpiry(entry)
-    const duplicateOf = await this.findDuplicate(normalized)
+    const normalized = applyDefaultExpiry(entry, this.defaultTtlSec)
+    const duplicateOf = await findDuplicate(this.store, this.dedupThreshold, normalized)
     if (duplicateOf) {
       return { accepted: false, reason: 'duplicate', duplicateOf }
     }
@@ -91,54 +123,55 @@ export class Librarian implements ILibrarian {
 
     const ordered = [left.id as string, right.id as string].sort()
     return {
-      winnerId: (ordered[0] === (left.id as string) ? left.id : right.id),
-      loserId: (ordered[0] === (left.id as string) ? right.id : left.id),
+      winnerId: ordered[0] === (left.id as string) ? left.id : right.id,
+      loserId: ordered[0] === (left.id as string) ? right.id : left.id,
       strategy: 'deterministic_tie_break',
     }
   }
 
-  private async findDuplicate(entry: KnowledgeEntry): Promise<ArtifactId | undefined> {
-    const textMatches = await this.store.searchByText(entry.content, { businessId: entry.businessId, limit: 5 })
-    const exact = textMatches.find((candidate) => candidate.content.trim() === entry.content.trim())
-    if (exact) {
-      return exact.id
+  public async submitProposal(proposal: MemoryProposal): Promise<SubmitProposalResult> {
+    const result = await this.proposalPipeline.submit(proposal)
+    return {
+      accepted: result.accepted,
+      entryId: result.entryId,
+      reason: result.reason,
     }
-
-    if (!entry.embedding || entry.embedding.length === 0) {
-      return undefined
-    }
-
-    // Store implementations should execute this through pgvector similarity (`embedding <=> query_vector`).
-    const vectorMatches = await this.store.searchByVector(entry.embedding, { businessId: entry.businessId, limit: 1 })
-    const top = vectorMatches[0]
-    if (top && top.similarity >= this.dedupThreshold) {
-      return top.entry.id
-    }
-    return undefined
   }
 
-  private applyDefaultExpiry(entry: KnowledgeEntry): KnowledgeEntry {
-    if (entry.expiresAt) {
-      return entry
-    }
-
-    const expiresAt = new Date(Date.now() + this.defaultTtlSec * 1000).toISOString()
-    return { ...entry, expiresAt }
+  public async queryV2(query: string, policy: RetrievalPolicy): Promise<KnowledgeEntryV2[]> {
+    const allForTenant = await this.listV2ByTenant(policy.tenantId)
+    const q = query.trim().toLowerCase()
+    const matched = q.length === 0
+      ? allForTenant
+      : allForTenant.filter((entry) => {
+        if (entry.title.toLowerCase().includes(q)) {
+          return true
+        }
+        return entry.atomicFacts.some((fact) => fact.toLowerCase().includes(q))
+      })
+    return this.retrievalEnforcer.enforce(matched, policy)
   }
 
-  private readEnvNumber(key: string, fallback: number, min: number, max?: number): number {
-    const raw = process.env[key]
-    if (!raw) {
-      return fallback
+  private createV2StoreAdapter(): IMemoryProposalStore {
+    return {
+      listByTenant: async (tenantId: string) => this.listV2ByTenant(tenantId),
+      save: async (entry: KnowledgeEntryV2) => this.saveV2Entry(entry),
     }
-
-    const parsed = Number(raw)
-    if (!Number.isFinite(parsed) || parsed < min) {
-      return fallback
-    }
-    if (max !== undefined && parsed > max) {
-      return fallback
-    }
-    return parsed
   }
+
+  private async listV2ByTenant(tenantId: string): Promise<KnowledgeEntryV2[]> {
+    if (this.store.listByTenantV2) {
+      return this.store.listByTenantV2(tenantId)
+    }
+    return Array.from(this.fallbackV2Store.values()).filter((entry) => entry.tenantId === tenantId)
+  }
+
+  private async saveV2Entry(entry: KnowledgeEntryV2): Promise<void> {
+    if (this.store.saveV2) {
+      await this.store.saveV2(entry)
+      return
+    }
+    this.fallbackV2Store.set(entry.entryId, entry)
+  }
+
 }

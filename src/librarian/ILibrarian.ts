@@ -1,4 +1,11 @@
-import { ArtifactId, BusinessId, KnowledgeEntry } from '@shared/types'
+import {
+  ArtifactId,
+  BusinessId,
+  KnowledgeEntry,
+  KnowledgeEntryV2,
+  MemoryProposal,
+  RetrievalPolicy,
+} from '@shared/types'
 
 export interface QueryFilters {
   readonly businessId?: BusinessId
@@ -26,9 +33,17 @@ export interface ResolutionResult {
   readonly strategy: 'higher_confidence' | 'newer_entry' | 'deterministic_tie_break'
 }
 
+export interface SubmitProposalResult {
+  readonly accepted: boolean
+  readonly entryId?: string
+  readonly reason?: string
+}
+
 export interface ILibrarian {
   ingest(entry: KnowledgeEntry): Promise<IngestResult>
   query(query: string, filters?: QueryFilters): Promise<KnowledgeEntry[]>
   prune(olderThan: string): Promise<PruneResult>
   resolveConflict(entryA: ArtifactId, entryB: ArtifactId): Promise<ResolutionResult>
+  submitProposal(proposal: MemoryProposal): Promise<SubmitProposalResult>
+  queryV2(query: string, policy: RetrievalPolicy): Promise<KnowledgeEntryV2[]>
 }

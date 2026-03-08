@@ -5,6 +5,7 @@ import type { IBudgetGovernor } from '@governor/IBudgetGovernor'
 import type { EvalPipeline } from '@eval/EvalPipeline'
 import type { TaskDAG, DAGNode } from './TaskDAG'
 import { DAGNodeStatus } from './TaskDAG'
+import type { ILibrarian } from '@librarian/ILibrarian'
 import {
     AgentRole,
     ModelTier,
@@ -103,6 +104,17 @@ function createMockEvalPipeline(result: PipelineResult): EvalPipeline {
     return {
         evaluate: vi.fn().mockResolvedValue(result),
     } as unknown as EvalPipeline
+}
+
+function createMockLibrarian(): ILibrarian {
+    return {
+        ingest: vi.fn(),
+        query: vi.fn(),
+        prune: vi.fn(),
+        resolveConflict: vi.fn(),
+        submitProposal: vi.fn().mockResolvedValue({ accepted: true, entryId: 'entry-1' }),
+        queryV2: vi.fn(),
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -269,5 +281,62 @@ describe('WorkerTaskExecutor', () => {
         const metadata = evalInput.metadata as Record<string, unknown>
         expect(metadata.nodeName).toBe('Special task')
         expect(metadata.goalId).toBe('goal-123')
+    })
+
+    it('routes worker memory proposals through librarian', async () => {
+        const workerWithProposal: IWorker = {
+            ...createMockWorker(),
+            execute: vi.fn().mockResolvedValue(makeWorkerResult({
+                memoryProposals: [{
+                    proposalId: 'proposal-1',
+                    tenantId: 'tenant-1',
+                    sourceAgentId: 'agent-worker',
+                    kind: 'observation',
+                    title: 'Observed issue',
+                    rawContent: 'Dispatcher retries twice before escalate.',
+                    summary: 'retry policy observation',
+                    tags: ['runtime'],
+                    confidence: 0.8,
+                    createdAt: new Date().toISOString(),
+                }],
+            })),
+        }
+        const workerRegistry: WorkerRegistry = new Map([[AgentRole.Worker, workerWithProposal]])
+        const librarian = createMockLibrarian()
+        const executor = new WorkerTaskExecutor(mockGovernor, mockEvalPipeline, workerRegistry, agentId, librarian)
+        const dag = makeDAG([makeNode()])
+
+        const result = await executor.executeNode(dag, 0)
+
+        expect(result.success).toBe(true)
+        expect(librarian.submitProposal).toHaveBeenCalledOnce()
+    })
+
+    it('fails when worker emits proposals and librarian is missing', async () => {
+        const workerWithProposal: IWorker = {
+            ...createMockWorker(),
+            execute: vi.fn().mockResolvedValue(makeWorkerResult({
+                memoryProposals: [{
+                    proposalId: 'proposal-1',
+                    tenantId: 'tenant-1',
+                    sourceAgentId: 'agent-worker',
+                    kind: 'observation',
+                    title: 'Observed issue',
+                    rawContent: 'Dispatcher retries twice before escalate.',
+                    summary: 'retry policy observation',
+                    tags: ['runtime'],
+                    confidence: 0.8,
+                    createdAt: new Date().toISOString(),
+                }],
+            })),
+        }
+        const workerRegistry: WorkerRegistry = new Map([[AgentRole.Worker, workerWithProposal]])
+        const executor = new WorkerTaskExecutor(mockGovernor, mockEvalPipeline, workerRegistry, agentId)
+        const dag = makeDAG([makeNode()])
+
+        const result = await executor.executeNode(dag, 0)
+
+        expect(result.success).toBe(false)
+        expect(result.errorMessage).toContain('no Librarian is configured')
     })
 })

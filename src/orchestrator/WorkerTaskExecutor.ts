@@ -4,6 +4,7 @@ import type { IWorker, WorkerResult } from '@workers/IWorker'
 import type { EvalPipeline } from '@eval/EvalPipeline'
 import type { IBudgetGovernor } from '@governor/IBudgetGovernor'
 import type { EvalInput } from '@eval/IEvaluator'
+import type { ILibrarian } from '@librarian/ILibrarian'
 import {
     type AgentId,
     type TaskSpec,
@@ -33,6 +34,7 @@ export class WorkerTaskExecutor implements TaskExecutor {
         private readonly evalPipeline: EvalPipeline,
         private readonly workerRegistry: WorkerRegistry,
         private readonly governorAgentId?: AgentId,
+        private readonly librarian?: ILibrarian,
     ) { }
 
     async executeNode(dag: TaskDAG, nodeIndex: number): Promise<NodeExecutionResult> {
@@ -73,6 +75,25 @@ export class WorkerTaskExecutor implements TaskExecutor {
             return {
                 success: false,
                 errorMessage: workerResult.errors?.join('; ') ?? 'Worker returned failure',
+            }
+        }
+
+        if (workerResult.memoryProposals && workerResult.memoryProposals.length > 0) {
+            if (!this.librarian) {
+                return {
+                    success: false,
+                    errorMessage: 'Worker emitted memory proposals but no Librarian is configured',
+                }
+            }
+
+            const librarian = this.librarian
+            try {
+                await Promise.all(workerResult.memoryProposals.map((proposal) => librarian.submitProposal(proposal)))
+            } catch (err) {
+                return {
+                    success: false,
+                    errorMessage: `Memory proposal routing failed: ${err instanceof Error ? err.message : 'Unknown error'}`,
+                }
             }
         }
 
