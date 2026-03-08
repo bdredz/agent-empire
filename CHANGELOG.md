@@ -179,6 +179,15 @@ Format is strict — follow exactly.
 **Tests:** 28/28 primitives passing, 145/145 total passing
 **Notes:** Extracted shared QueryChain and PrimitiveDb interfaces from 3 duplicated definitions into `src/primitives/db.ts`. Each primitive now imports from the shared module. LeadTracker uses full PrimitiveDb, ApiGateway uses `Pick<PrimitiveDb, 'insert'>`, WebhookManager uses `Pick<PrimitiveDb, 'insert' | 'select' | 'update'>`.
 
+### 2026-03-08 OPUS — Phase 12: P2-O3 Jarvis PlanEnvelope Tests
+**Branch:** main
+**Status:** PASS
+**Interfaces consumed:** PlanEnvelope, EscalationReason, IDispatcher
+**Interfaces produced:** 6 new test cases
+**Files modified:** 1 (src/orchestrator/Jarvis.test.ts)
+**Tests:** 261/261
+**Notes:** Added Phase 2 PlanEnvelope behavior test suite: createPlan validation, escalationPolicy defaults, retrievalPolicy tenant scoping, dispatcher.accept on processGoal, dispatcher delegation on executeDAG, dispatcher.escalate on handleEscalation. All 25 existing + 6 new = 31 Jarvis tests pass.
+
 ### 2026-03-08 OPUS — Phase 12: P2-O1 + P2-O2 Jarvis Handoff Refactor
 **Branch:** main
 **Status:** PASS

@@ -1,5 +1,16 @@
 # Agent Empire: Project Memory
 
+## 2026-03-08 — Phase 2 P2-O3: Jarvis PlanEnvelope Tests
+### What changed
+- Added 6 new tests to `Jarvis.test.ts` in `describe('Phase 2 — PlanEnvelope behavior')`
+- Tests cover: createPlan field validation, escalationPolicy defaults, retrievalPolicy tenant scoping, dispatcher.accept() on processGoal, dispatcher delegation on executeDAG, dispatcher.escalate() on handleEscalation
+- Total: 261/261 tests pass across 28 files
+
+### Next OPUS tasks
+- P2-O4: EvalPipeline.ts front-run with AuditMinion (blocked by P2-G2 — GEMINI's AuditMinion)
+- P2-O5: BudgetGovernor.ts telemetry hooks (blocked by P2-G1 — GEMINI's TelemetryMinion)
+- P2-O6-O8: Integration tests (blocked by CODEX Dispatcher + memory spine + checkpointing)
+
 ## 2026-03-08 — Phase 2 P2-O1 + P2-O2: Jarvis Handoff Refactor
 ### What changed
 - **P2-O1**: `IJarvis.ts` refactored — added `createPlan(goal, tenantId) → PlanEnvelope`, `handleEscalation(planId, reason) → PlanEnvelope|null`, `executeDAG` marked `@deprecated`
