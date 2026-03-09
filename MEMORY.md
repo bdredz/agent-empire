@@ -1,6 +1,35 @@
 # Agent Empire: Project Memory
 
-<<<<<<< HEAD
+## 2026-03-08 — Phase 2 OPUS Complete: P2-O4 through P2-O8
+### What changed
+- **P2-O4**: EvalPipeline.ts AuditMinion front-run — optional IAuditMinion (5th constructor param), Stage 0 audit before deterministic eval (reject→Fail, warn→continue, pass→silent). `EvalInput` gained `agentId`, `EvalStage` expanded with `'audit'`. 4 new tests.
+- **P2-O5**: BudgetGovernor.ts telemetry hooks — optional ITelemetryMinion (2nd constructor param), `recordUsage()` forwards to telemetry, `checkBudget()` calls `detectAnomalies()` and emits BudgetWarning on critical. 4 new tests.
+- **P2-O6**: `src/integration/controlPlane.test.ts` — 4 integration tests (happy path, worker failure → retry, retry limit → escalation, budget trip). Uses real DispatcherMinion + AuditMinion, mocked evaluators.
+- **P2-O7**: `src/integration/memoryProposal.test.ts` — 5 integration tests (proposal→knowledge, duplicate rejection, tenant isolation, empty content rejection, low confidence acceptance). Uses real MemoryPolicy, AtomicFactExtractor, RetrievalPolicyEnforcer.
+- **P2-O8**: `src/integration/checkpointMechanic.test.ts` — 14 integration tests across 4 describe blocks (checkpoint save/resume, ActionPolicy whitelist, MechanicAuditLog CRUD, end-to-end Mechanic safety pipeline). Uses real ActionPolicy, MechanicRequestValidator, MechanicAuditLog.
+- Total: 406/406 tests pass across 48 files, typecheck clean
+
+### Gotchas
+- `MemoryKind` is a **type union** NOT a const object — use `'observation' as MemoryKind`
+- `AgentHandle` has many required fields (agentId, roleName, createdAt, budgetAllocated, toolBundleResolved, memoryPolicyResolved, lineage, provenanceHash, status) — use `as unknown as AgentHandle` for test fixtures
+- `RetrievalPolicyEnforcer.enforce()` requires full `RetrievalPolicy` object (tenantId, includeGlobalArchitecture, maxFacts, maxTokens, allowedKinds), NOT just `{ tenantId }`
+- MemoryPolicy does NOT gate on confidence — only checks tenant, title, rawContent, writer, sensitive patterns, content length
+- AtomicFactExtractor output is non-deterministic — assert `length >= 1`, don't match specific strings
+- `MechanicAuditLog` uses temp file path for tests — clean up in `afterEach`
+- **Subagent worktree drift**: parallel subagents may write to worktree vs main — always verify file locations after subagent completion before committing
+
+### All OPUS Phase 2 tasks COMPLETE
+| Task | Description | Status |
+|------|-------------|--------|
+| P2-O1 | IJarvis.ts refactor | ✅ |
+| P2-O2 | Jarvis.ts PlanEnvelope handoff | ✅ |
+| P2-O3 | Jarvis.test.ts Phase 2 tests | ✅ |
+| P2-O4 | EvalPipeline AuditMinion front-run | ✅ |
+| P2-O5 | BudgetGovernor telemetry hooks | ✅ |
+| P2-O6 | controlPlane.test.ts integration | ✅ |
+| P2-O7 | memoryProposal.test.ts integration | ✅ |
+| P2-O8 | checkpointMechanic.test.ts integration | ✅ |
+
 ## 2026-03-08 — Phase 2 P2-O3: Jarvis PlanEnvelope Tests
 ### What changed
 - Added 6 new tests to `Jarvis.test.ts` in `describe('Phase 2 — PlanEnvelope behavior')`

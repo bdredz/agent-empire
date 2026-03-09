@@ -38,18 +38,62 @@ PHASE 11: INTEGRATION                 [PASS]        depends: all         owner: 
 
 PRODUCTION HARDENING                  [PASS]        depends: 0-11        owner: ALL
 
-PHASE 12: CONTROL PLANE HARDENING     [IN_PROGRESS] depends: 7,6,2,3,4   owner: OPUS+CODEX
-PHASE 13: MEMORY SPINE & TENANCY      [NOT_STARTED] depends: 12,6        owner: CODEX
-PHASE 14: DURABILITY & CHECKPOINTING  [NOT_STARTED] depends: 12          owner: CODEX
-PHASE 15: TELEMETRY & AUDIT MINIONS   [NOT_STARTED] depends: 12,2,3      owner: CODEX+GEMINI
-PHASE 16: MECHANIC SAFETY HARDENING   [NOT_STARTED] depends: 12,4        owner: CODEX
-PHASE 17: DYNAMIC TOOL LOADING        [NOT_STARTED] depends: 12,8,9      owner: GEMINI
-PHASE 18: CAPABILITY MANIFESTS        [NOT_STARTED] depends: 13,16,9     owner: OPUS+CODEX
+PHASE 12: CONTROL PLANE HARDENING     [PASS]        depends: 7,6,2,3,4   owner: OPUS+CODEX
+PHASE 13: MEMORY SPINE & TENANCY      [PASS]        depends: 12,6        owner: CODEX
+PHASE 14: DURABILITY & CHECKPOINTING  [PASS]        depends: 12          owner: CODEX
+PHASE 15: TELEMETRY & AUDIT MINIONS   [PASS]        depends: 12,2,3      owner: CODEX+GEMINI
+PHASE 16: MECHANIC SAFETY HARDENING   [PASS]        depends: 12,4        owner: CODEX
+PHASE 17: DYNAMIC TOOL LOADING        [PASS]        depends: 12,8,9      owner: GEMINI
+PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: OPUS+CODEX
 ```
 
 ---
 
 ## Log
+
+### [2026-03-08] [OPUS] — Phase 12-18: P2-O6/O7/O8 Integration Tests
+**Branch:** main
+**Status:** PASS
+**Interfaces consumed:** DispatcherMinion, AuditMinion, MemoryProposalPipeline, MemoryPolicy, AtomicFactExtractor, RetrievalPolicyEnforcer, WorkflowResumer, ICheckpointStore, ActionPolicy, MechanicAuditLog, MechanicRequestValidator
+**Interfaces produced:** 3 integration test suites (23 tests total)
+**Files created:** 3 (src/integration/controlPlane.test.ts, src/integration/memoryProposal.test.ts, src/integration/checkpointMechanic.test.ts)
+**Tests:** 406/406
+**Notes:** P2-O6: 4 control plane tests (happy path, retry, escalation, budget trip). P2-O7: 5 memory spine tests (proposal→knowledge, dedup, tenant isolation, empty rejection, low-conf acceptance). P2-O8: 14 checkpoint+mechanic tests (save/resume, policy whitelist, audit log, end-to-end safety pipeline). Subagent worktree drift required manual file consolidation.
+
+---
+
+### [2026-03-08] [OPUS] — Phase 12/15: P2-O4 + P2-O5 Hooks
+**Branch:** main
+**Status:** PASS
+**Interfaces consumed:** IAuditMinion, AuditVerdict, ITelemetryMinion, TelemetryAlert
+**Interfaces produced:** EvalStage 'audit', EvalInput.agentId
+**Files modified:** 4 (src/eval/EvalPipeline.ts, src/eval/IEvaluator.ts, src/eval/EvalPipeline.test.ts, src/governor/BudgetGovernor.ts, src/governor/BudgetGovernor.test.ts)
+**Tests:** 383/383
+**Notes:** P2-O4: EvalPipeline gains optional IAuditMinion — Stage 0 front-run (reject/warn/pass) before deterministic eval. P2-O5: BudgetGovernor gains optional ITelemetryMinion — recordUsage forwards, checkBudget detects anomalies.
+
+---
+
+### [2026-03-08] [CODEX] — Phases 12-18: Full Phase 2 Implementation
+**Branch:** main (merged from codex/phase-2-hardening)
+**Status:** PASS
+**Interfaces consumed:** All Phase 2 shared contracts from types.ts
+**Interfaces produced:** DispatcherMinion, DispatcherPlanRunner, ICheckpointStore, PostgresCheckpointStore, RedisCheckpointStore, WorkflowResumer, WaitConditionScheduler, ActionPolicy, MechanicRequestValidator, MechanicAuditLog, MechanicActionExecutor, MechanicStateStore, CapabilityManifestWriter, InternalRegistry, MemoryPolicy, AtomicFactExtractor, RetrievalPolicyEnforcer, MemoryProposalPipeline
+**Files created:** 52
+**Tests:** 333→406 (73 new tests)
+**Notes:** Delivered dispatcher runtime, memory spine, checkpoint stores, mechanic safety hardening, and capability manifest indexing. All wired into DI container.
+
+---
+
+### [2026-03-08] [GEMINI] — Phase 15/17: Minions + Dashboard Analytics
+**Branch:** main (merged from agent/gemini/phase-2-*)
+**Status:** PASS
+**Interfaces consumed:** IAuditMinion, ITelemetryMinion, ITokenBurnAnalyzer, IToolDiscoveryService
+**Interfaces produced:** AuditMinion, SecretLeakScanner, SchemaConformanceChecker, TelemetryMinion, TokenBurnAnalyzer, ToolDiscoveryService, DomainToolRegistry
+**Files created:** 14
+**Tests:** 333/333
+**Notes:** Implemented standalone audit/telemetry minions, tool discovery, dashboard visualizations for token burn analytics and budget warnings.
+
+---
 
 ### [2026-03-08] [OPUS] — Phase 2: Task Distribution
 **Branch:** main (merged from claude/clever-austin)
