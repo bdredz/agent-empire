@@ -1,7 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   Budget,
   BudgetGovernorState,
@@ -9,6 +9,7 @@ import {
   createAgentId,
 } from '@shared/types'
 import { BudgetGovernor } from '@governor/BudgetGovernor'
+import { ITelemetryMinion, TelemetryAlert } from '../minions/TelemetryMinion'
 
 const createBudget = (overrides: Partial<Budget> = {}): Budget => ({
   maxTokens: 100,
@@ -220,6 +221,100 @@ describe('BudgetGovernor', () => {
     const result = governor.checkBudget(agentId)
     expect(result.withinLimits).toBe(false)
     expect(result.exceeded).toContain('cost usage exceeded maximum')
+
+    cleanup()
+  })
+})
+
+function mockTelemetryMinion(): ITelemetryMinion {
+  return {
+    recordUsage: vi.fn(),
+    detectAnomalies: vi.fn().mockReturnValue([]),
+    getAgentBurnRate: vi.fn().mockReturnValue({ tokensPerMinute: 0, trend: 'stable' }),
+  }
+}
+
+const createGovernorWithTelemetry = (
+  telemetry: ITelemetryMinion,
+): { governor: BudgetGovernor; statePath: string; cleanup: () => void } => {
+  const dir = mkdtempSync(join(tmpdir(), 'budget-governor-telemetry-'))
+  const statePath = join(dir, 'state.json')
+
+  return {
+    governor: new BudgetGovernor(statePath, telemetry),
+    statePath,
+    cleanup: () => rmSync(dir, { recursive: true, force: true }),
+  }
+}
+
+describe('Phase 2 — Telemetry hooks', () => {
+  it('recordUsage forwards to telemetry.recordUsage when injected', () => {
+    const telemetry = mockTelemetryMinion()
+    const { governor, cleanup } = createGovernorWithTelemetry(telemetry)
+    const agentId = createAgentId('telem-agent-1')
+
+    governor.allocate(agentId, createBudget())
+    governor.recordUsage(agentId, { tokensUsed: 10 })
+
+    expect(telemetry.recordUsage).toHaveBeenCalledWith(agentId, { tokensUsed: 10 })
+
+    cleanup()
+  })
+
+  it('checkBudget calls telemetry.detectAnomalies and emits BudgetWarning on critical alerts', () => {
+    const criticalAlert: TelemetryAlert = {
+      type: 'spike',
+      agentId: createAgentId('telem-agent-2'),
+      message: 'Token spike detected: 60000 tokens',
+      severity: 'critical',
+    }
+    const telemetry = mockTelemetryMinion()
+    vi.mocked(telemetry.detectAnomalies).mockReturnValue([criticalAlert])
+
+    const { governor, statePath, cleanup } = createGovernorWithTelemetry(telemetry)
+    const agentId = createAgentId('telem-agent-2')
+
+    governor.allocate(agentId, createBudget())
+    governor.checkBudget(agentId)
+
+    expect(telemetry.detectAnomalies).toHaveBeenCalledWith(agentId)
+
+    const state = readState(statePath)
+    const budgetWarningEvents = state.events.filter((e) => e.eventType === EventType.BudgetWarning)
+    expect(budgetWarningEvents).toHaveLength(1)
+    expect(budgetWarningEvents[0]?.payload['message']).toBe('Token spike detected: 60000 tokens')
+
+    cleanup()
+  })
+
+  it('checkBudget with no anomalies does not emit extra events', () => {
+    const telemetry = mockTelemetryMinion()
+    // detectAnomalies already returns [] by default from mockTelemetryMinion
+
+    const { governor, statePath, cleanup } = createGovernorWithTelemetry(telemetry)
+    const agentId = createAgentId('telem-agent-3')
+
+    governor.allocate(agentId, createBudget())
+    governor.checkBudget(agentId)
+
+    expect(telemetry.detectAnomalies).toHaveBeenCalledWith(agentId)
+
+    const state = readState(statePath)
+    expect(state.events).toHaveLength(0)
+
+    cleanup()
+  })
+
+  it('without telemetry injected, recordUsage and checkBudget work as before', () => {
+    const { governor, cleanup } = createGovernor()
+    const agentId = createAgentId('telem-agent-4')
+
+    governor.allocate(agentId, createBudget())
+    governor.recordUsage(agentId, { tokensUsed: 20 })
+
+    const result = governor.checkBudget(agentId)
+    expect(result.withinLimits).toBe(true)
+    expect(governor.getUsage(agentId).tokensUsed).toBe(20)
 
     cleanup()
   })

@@ -14,6 +14,7 @@ import {
   SystemEvent,
 } from '@shared/types'
 import { IBudgetGovernor } from '@governor/IBudgetGovernor'
+import { ITelemetryMinion } from '../minions/TelemetryMinion'
 
 const DEFAULT_WARNING_RATIO = 0.75
 const DEFAULT_TRIP_RATIO = 0.9
@@ -24,7 +25,7 @@ export class BudgetGovernor implements IBudgetGovernor {
   private readonly stateFilePath: string
   private readonly thresholds: BudgetThresholdConfig
 
-  constructor(stateFilePath?: string) {
+  constructor(stateFilePath?: string, private readonly telemetry?: ITelemetryMinion) {
     this.stateFilePath = stateFilePath ?? process.env.BUDGET_GOVERNOR_STATE_FILE ?? DEFAULT_STATE_FILE
     this.thresholds = {
       warningRatio: this.readRatioFromEnv('BUDGET_WARNING_RATIO', DEFAULT_WARNING_RATIO),
@@ -71,6 +72,11 @@ export class BudgetGovernor implements IBudgetGovernor {
 
     this.writeState(state)
 
+    // Phase 2: Forward usage to telemetry minion
+    if (this.telemetry) {
+      this.telemetry.recordUsage(agentId, usage)
+    }
+
     const checkResult = this.checkBudget(agentId)
     if (!checkResult.withinLimits) {
       this.tripCircuitBreaker(agentId, checkResult.exceeded.join('; '))
@@ -99,6 +105,16 @@ export class BudgetGovernor implements IBudgetGovernor {
 
     if (agentState.status === AgentStatus.Paused && exceeded.length === 0) {
       exceeded.push(agentState.circuitBreakerReason ?? 'circuit breaker tripped')
+    }
+
+    // Phase 2: Check for anomalies via telemetry
+    if (this.telemetry) {
+      const alerts = this.telemetry.detectAnomalies(agentId)
+      for (const alert of alerts) {
+        if (alert.severity === 'critical') {
+          this.emitEvent(EventType.BudgetWarning, agentId, alert.message)
+        }
+      }
     }
 
     return {
@@ -142,6 +158,21 @@ export class BudgetGovernor implements IBudgetGovernor {
   public getUsage(agentId: AgentId): BudgetUsage {
     const state = this.readState()
     return this.requireAgentState(state, agentId).usage
+  }
+
+  private emitEvent(eventType: EventType, agentId: AgentId, message: string): void {
+    const state = this.readState()
+    const timestamp = new Date().toISOString()
+    const event: SystemEvent = {
+      eventId: `${this.toAgentKey(agentId)}:${eventType}:${timestamp}`,
+      eventType,
+      timestamp,
+      agentId,
+      payload: { message },
+      severity: 'warning',
+    }
+    state.events = [...state.events, event]
+    this.writeState(state)
   }
 
   private readRatioFromEnv(envKey: string, fallback: number): number {

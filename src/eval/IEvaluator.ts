@@ -9,6 +9,7 @@ export interface EvalInput {
   readonly artifacts: ArtifactId[]
   readonly output: unknown
   readonly metadata?: Record<string, unknown>
+  readonly agentId?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -42,7 +43,7 @@ export const DEFAULT_PIPELINE_CONFIG: EvalPipelineConfig = {
 // Pipeline Stage Result — tracks which stage produced the result
 // ---------------------------------------------------------------------------
 
-export type EvalStage = 'deterministic' | 'llm_critic' | 'escalation' | 'hitl'
+export type EvalStage = 'audit' | 'deterministic' | 'llm_critic' | 'escalation' | 'hitl'
 
 export interface PipelineResult {
   readonly finalResult: EvalResult

@@ -5,6 +5,7 @@ import { LlmCriticEvaluator, LlmCriticProvider } from './LlmCriticEvaluator'
 import { EscalationEvaluator, EscalationProvider } from './EscalationEvaluator'
 import { EvalInput, EvalPipelineConfig } from './IEvaluator'
 import { EvalOutcome, createArtifactId } from '@shared/types'
+import { IAuditMinion, AuditVerdict } from '../minions/AuditMinion'
 
 // ---------------------------------------------------------------------------
 // Test helpers — mock providers
@@ -432,5 +433,148 @@ describe('EvalPipeline', () => {
     const result = await evaluator.evaluate(makeInput(null))
     expect(result.outcome).toBe(EvalOutcome.Fail)
     expect(result.reasoning).toContain('Output is null')
+  })
+
+  // =========================================================================
+  // Phase 2 — Audit front-run
+  // =========================================================================
+
+  describe('Phase 2 — Audit front-run', () => {
+    function mockAuditMinion(verdict: AuditVerdict): IAuditMinion {
+      return { audit: vi.fn().mockReturnValue(verdict) }
+    }
+
+    function makePipelineWithAudit(audit: IAuditMinion): EvalPipeline {
+      return new EvalPipeline(
+        new DeterministicEvaluator(makePassingChecks()),
+        new LlmCriticEvaluator(
+          makeMockCriticProvider([{ pass: true, confidence: 0.9, reasoning: 'Good' }])
+        ),
+        new EscalationEvaluator(
+          makeMockEscalationProvider({ pass: true, confidence: 0.9, reasoning: 'OK', recommendation: 'accept' })
+        ),
+        {},
+        audit
+      )
+    }
+
+    // -----------------------------------------------------------------------
+    // 18. Audit reject → immediate Fail, deterministic never runs
+    // -----------------------------------------------------------------------
+    it('returns Fail immediately when audit rejects, skipping deterministic stage', async () => {
+      const deterministicSpy = vi.fn().mockResolvedValue({
+        outcome: EvalOutcome.Pass,
+        reasoning: 'Passed',
+        evaluatorId: 'deterministic',
+        timestamp: new Date().toISOString(),
+      })
+
+      const verdict: AuditVerdict = {
+        outcome: 'reject',
+        issues: [
+          { code: 'POLICY_VIOLATION', message: 'Output violates content policy', severity: 'critical' },
+        ],
+      }
+      const audit = mockAuditMinion(verdict)
+
+      const pipeline = new EvalPipeline(
+        { evaluate: deterministicSpy, name: 'deterministic' } as unknown as DeterministicEvaluator,
+        new LlmCriticEvaluator(
+          makeMockCriticProvider([{ pass: true, confidence: 0.9, reasoning: 'Good' }])
+        ),
+        new EscalationEvaluator(
+          makeMockEscalationProvider({ pass: true, confidence: 0.9, reasoning: 'OK', recommendation: 'accept' })
+        ),
+        {},
+        audit
+      )
+
+      const result = await pipeline.evaluate(makeInput())
+
+      expect(result.finalResult.outcome).toBe(EvalOutcome.Fail)
+      expect(result.stage).toBe('audit')
+      expect(result.finalResult.reasoning).toContain('Audit rejected')
+      expect(result.finalResult.reasoning).toContain('Output violates content policy')
+      expect(result.totalAttempts).toBe(1)
+      expect(result.stageResults).toHaveLength(1)
+      expect(result.stageResults[0]!.stage).toBe('audit')
+      expect(deterministicSpy).not.toHaveBeenCalled()
+    })
+
+    // -----------------------------------------------------------------------
+    // 19. Audit warn → audit result in stageResults, pipeline continues to pass
+    // -----------------------------------------------------------------------
+    it('records warn in stageResults and allows pipeline to continue to pass', async () => {
+      const verdict: AuditVerdict = {
+        outcome: 'warn',
+        issues: [
+          { code: 'QUALITY_LOW', message: 'Output quality is below recommended threshold', severity: 'warning' },
+        ],
+      }
+      const audit = mockAuditMinion(verdict)
+      const pipeline = makePipelineWithAudit(audit)
+
+      const result = await pipeline.evaluate(makeInput())
+
+      expect(result.finalResult.outcome).toBe(EvalOutcome.Pass)
+      // Audit stage result must be first in stageResults
+      const auditStage = result.stageResults.find((sr) => sr.stage === 'audit')
+      expect(auditStage).toBeDefined()
+      expect(auditStage!.result.reasoning).toContain('Audit warnings')
+      expect(auditStage!.result.reasoning).toContain('Output quality is below recommended threshold')
+      // Pipeline should still have proceeded through deterministic + llm_critic
+      const stages = result.stageResults.map((sr) => sr.stage)
+      expect(stages).toContain('deterministic')
+      expect(stages).toContain('llm_critic')
+    })
+
+    // -----------------------------------------------------------------------
+    // 20. Audit pass → no audit stage result, pipeline proceeds normally
+    // -----------------------------------------------------------------------
+    it('adds no audit stage result when audit passes, pipeline proceeds normally', async () => {
+      const verdict: AuditVerdict = {
+        outcome: 'pass',
+        issues: [],
+      }
+      const audit = mockAuditMinion(verdict)
+      const pipeline = makePipelineWithAudit(audit)
+
+      const result = await pipeline.evaluate(makeInput())
+
+      expect(result.finalResult.outcome).toBe(EvalOutcome.Pass)
+      // No audit stage result should be present
+      const auditStage = result.stageResults.find((sr) => sr.stage === 'audit')
+      expect(auditStage).toBeUndefined()
+      // Should have gone through deterministic and llm_critic
+      expect(result.stageResults[0]!.stage).toBe('deterministic')
+    })
+
+    // -----------------------------------------------------------------------
+    // 21. No auditMinion injected → backward compat, works exactly as before
+    // -----------------------------------------------------------------------
+    it('works exactly as before when no auditMinion is injected (backward compat)', async () => {
+      // Pipeline without 5th arg — original 4-arg constructor form
+      const pipeline = new EvalPipeline(
+        new DeterministicEvaluator(makePassingChecks()),
+        new LlmCriticEvaluator(
+          makeMockCriticProvider([{ pass: true, confidence: 0.9, reasoning: 'Good' }])
+        ),
+        new EscalationEvaluator(
+          makeMockEscalationProvider({ pass: true, confidence: 0.9, reasoning: 'OK', recommendation: 'accept' })
+        )
+      )
+
+      const result = await pipeline.evaluate(makeInput())
+
+      expect(result.finalResult.outcome).toBe(EvalOutcome.Pass)
+      expect(result.stage).toBe('llm_critic')
+      // No audit stage in results
+      const hasAuditStage = result.stageResults.some((sr) => sr.stage === 'audit')
+      expect(hasAuditStage).toBe(false)
+      // Standard flow: deterministic + llm_critic
+      expect(result.stageResults).toHaveLength(2)
+      expect(result.stageResults[0]!.stage).toBe('deterministic')
+      expect(result.stageResults[1]!.stage).toBe('llm_critic')
+    })
   })
 })

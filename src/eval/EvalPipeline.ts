@@ -1,4 +1,4 @@
-import { EvalResult, EvalOutcome } from '@shared/types'
+import { EvalResult, EvalOutcome, createAgentId } from '@shared/types'
 import {
   EvalInput,
   EvalPipelineConfig,
@@ -9,12 +9,15 @@ import {
 import { DeterministicEvaluator } from './DeterministicEvaluator'
 import { LlmCriticEvaluator } from './LlmCriticEvaluator'
 import { EscalationEvaluator } from './EscalationEvaluator'
+import { IAuditMinion, IAuditMinionContext } from '../minions/AuditMinion'
 
 // ---------------------------------------------------------------------------
 // EvalPipeline — Staged evaluation orchestrator
 //
-// Flow:
-//   Deterministic → (pass?) → LlmCritic → (pass?) → accept
+// Flow (Phase 2+):
+//   AuditMinion (Stage 0) → Deterministic → (pass?) → LlmCritic → (pass?) → accept
+//   AuditMinion reject → immediate Fail (no further stages run)
+//   AuditMinion warn → record warning, continue pipeline
 //   Deterministic → (fail?) → retry with feedback (up to maxRetries)
 //   LlmCritic → (fail 3x?) → Escalation
 //   Escalation → (fail?) → HITL
@@ -27,7 +30,8 @@ export class EvalPipeline {
     private readonly deterministic: DeterministicEvaluator,
     private readonly llmCritic: LlmCriticEvaluator,
     private readonly escalation: EscalationEvaluator,
-    config: Partial<EvalPipelineConfig> = {}
+    config: Partial<EvalPipelineConfig> = {},
+    private readonly auditMinion?: IAuditMinion
   ) {
     this.config = { ...DEFAULT_PIPELINE_CONFIG, ...config }
   }
@@ -35,6 +39,59 @@ export class EvalPipeline {
   async evaluate(input: EvalInput): Promise<PipelineResult> {
     const stageResults: PipelineResult['stageResults'] = []
     let attempt = 0
+
+    // -----------------------------------------------------------------------
+    // Stage 0: Audit front-run (Phase 2)
+    // -----------------------------------------------------------------------
+    if (this.auditMinion) {
+      const auditContext: IAuditMinionContext = {
+        agentId: createAgentId(input.agentId ?? 'unknown'),
+        taskType: input.taskType,
+      }
+      const verdict = this.auditMinion.audit(
+        input.output as Record<string, unknown>,
+        auditContext
+      )
+
+      if (verdict.outcome === 'reject') {
+        const rejectionReasoning = `Audit rejected: ${verdict.issues.map((i) => i.message).join('; ')}`
+        const rejectionResult: EvalResult = {
+          outcome: EvalOutcome.Fail,
+          scores: { 'audit-score': 0 },
+          reasoning: rejectionReasoning,
+          evaluatorId: 'audit-minion',
+          timestamp: new Date().toISOString(),
+        }
+        return {
+          finalResult: rejectionResult,
+          stage: 'audit' as EvalStage,
+          stageResults: [
+            {
+              stage: 'audit' as EvalStage,
+              result: rejectionResult,
+              attemptNumber: 1,
+            },
+          ],
+          totalAttempts: 1,
+        }
+      }
+
+      if (verdict.outcome === 'warn') {
+        const warnReasoning = `Audit warnings: ${verdict.issues.map((i) => i.message).join('; ')}`
+        stageResults.push({
+          stage: 'audit' as EvalStage,
+          result: {
+            outcome: EvalOutcome.Pass,
+            scores: { 'audit-score': 0.7 },
+            reasoning: warnReasoning,
+            evaluatorId: 'audit-minion',
+            timestamp: new Date().toISOString(),
+          },
+          attemptNumber: 1,
+        })
+      }
+      // pass: no stage result added, continue silently
+    }
 
     // -----------------------------------------------------------------------
     // Stage 1: Deterministic evaluation (with retries)
