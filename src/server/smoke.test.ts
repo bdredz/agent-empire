@@ -19,6 +19,8 @@ import type { EscalationProvider, EscalationContext } from '@eval/EscalationEval
 import type { ILibrarianStore, VectorMatch } from '@librarian/Librarian'
 import type { QueryFilters } from '@librarian/ILibrarian'
 import type { IMechanic } from '@mechanic/IMechanic'
+import type { IResearchBroker } from '../evidence/IResearchBroker.js'
+import type { ResearchReport } from '@shared/types'
 
 // ---------------------------------------------------------------------------
 // Build a test-friendly container (no Docker/DB dependencies)
@@ -70,6 +72,12 @@ function createTestContainer(): Container {
     const dispatcher = new DispatcherMinion(taskExecutor, governor, evalPipeline)
     const jarvis = new Jarvis(goalAnalyzer, taskExecutor, {}, dispatcher)
 
+    const stubResearchBroker: IResearchBroker = {
+        async research() { return {} as ResearchReport },
+        async getEvidence() { return null },
+        async listEvidence() { return [] },
+    }
+
     return {
         factory,
         governor,
@@ -78,6 +86,7 @@ function createTestContainer(): Container {
         jarvis,
         dispatcher,
         librarian,
+        researchBroker: stubResearchBroker,
     }
 }
 

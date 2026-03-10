@@ -16,6 +16,14 @@ import { Librarian } from '@librarian/Librarian'
 import { CapabilityManifestWriter } from '@librarian/CapabilityManifestWriter'
 import { InternalRegistry } from '@librarian/InternalRegistry'
 import type { ILibrarianStore } from '@librarian/Librarian'
+import { SourcePolicyEngine } from '../evidence/SourcePolicyEngine.js'
+import { EvidenceStore } from '../evidence/EvidenceStore.js'
+import { ClaimExtractor } from '../evidence/ClaimExtractor.js'
+import { FreshnessScorer } from '../evidence/FreshnessScorer.js'
+import { CitationCompiler } from '../evidence/CitationCompiler.js'
+import { ResearchReportBuilder } from '../evidence/ResearchReportBuilder.js'
+import { ResearchBroker } from '../evidence/ResearchBroker.js'
+import type { IResearchBroker } from '../evidence/IResearchBroker.js'
 import { getConfig } from '@shared/config'
 import { createChildLogger } from '@shared/logger'
 import type { GoalAnalyzer, TaskExecutor } from '@orchestrator/IJarvis'
@@ -31,6 +39,7 @@ export interface Container {
   readonly jarvis: Jarvis
   readonly dispatcher: DispatcherMinion
   readonly librarian: Librarian
+  readonly researchBroker: IResearchBroker
 }
 
 // Stub providers — used at boot until real LLM/infra providers are wired
@@ -99,7 +108,31 @@ export function createContainer(
   const dispatcher = new DispatcherMinion(taskExecutor, governor, evalPipeline)
   const jarvis = new Jarvis(goalAnalyzer, taskExecutor, {}, dispatcher)
 
+  // Evidence Plane
+  const sourcePolicyEngine = new SourcePolicyEngine({
+    deniedDomains: ['spam.com', 'malware.net'],
+    highRiskDomains: ['unverified.io'],
+  })
+  const evidenceStore = new EvidenceStore()
+  const claimExtractor = new ClaimExtractor()
+  const freshnessScorer = new FreshnessScorer()
+  const citationCompiler = new CitationCompiler()
+  const reportBuilder = new ResearchReportBuilder()
+  const researchBroker: IResearchBroker = new ResearchBroker(
+    sourcePolicyEngine,
+    evidenceStore,
+    claimExtractor,
+    freshnessScorer,
+    citationCompiler,
+    reportBuilder,
+    (proposal) => {
+      librarian.submitProposal(proposal).catch((err: unknown) => {
+        log.error({ err }, 'Failed to submit research proposal to librarian')
+      })
+    }
+  )
+
   log.info('All components initialized')
 
-  return { factory, governor, mechanic, evalPipeline, jarvis, dispatcher, librarian }
+  return { factory, governor, mechanic, evalPipeline, jarvis, dispatcher, librarian, researchBroker }
 }
