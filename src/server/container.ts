@@ -24,10 +24,44 @@ import { CitationCompiler } from '../evidence/CitationCompiler.js'
 import { ResearchReportBuilder } from '../evidence/ResearchReportBuilder.js'
 import { ResearchBroker } from '../evidence/ResearchBroker.js'
 import type { IResearchBroker } from '../evidence/IResearchBroker.js'
+// Trust Plane
+import { TrustAuditLog } from '../trust/TrustAuditLog.js'
+import { AgentIdentityService } from '../trust/AgentIdentityService.js'
+import { MandateService } from '../trust/MandateService.js'
+import { CounterpartyRegistry } from '../trust/CounterpartyRegistry.js'
+import { VerificationPolicyEngine } from '../trust/VerificationPolicyEngine.js'
+import { AgentReputationService } from '../trust/AgentReputationService.js'
+import { RevocationService } from '../trust/RevocationService.js'
+// Commerce Plane
+import { ReceiptService } from '../commerce/ReceiptService.js'
+import { QuoteService } from '../commerce/QuoteService.js'
+import { RefundPolicyEngine } from '../commerce/RefundPolicyEngine.js'
+import { DisputeService } from '../commerce/DisputeService.js'
+import { SettlementReconciler } from '../commerce/SettlementReconciler.js'
+import { CommerceOrchestrator } from '../commerce/CommerceOrchestrator.js'
+import { StripeCommerceAdapter } from '../commerce/adapters/StripeCommerceAdapter.js'
+import { X402Adapter } from '../commerce/adapters/X402Adapter.js'
+import { CoinbaseWalletAdapter } from '../commerce/adapters/CoinbaseWalletAdapter.js'
+import { McpPayAdapter } from '../commerce/adapters/McpPayAdapter.js'
+import type { ICommerceRailAdapter } from '../commerce/ICommerceRailAdapter.js'
+import { WalletPolicyEngine } from '../commerce/wallets/WalletPolicyEngine.js'
+import { WalletBindingService } from '../commerce/wallets/WalletBindingService.js'
+import { TreasuryLedger } from '../commerce/treasury/TreasuryLedger.js'
+import { TreasuryService } from '../commerce/treasury/TreasuryService.js'
+// Discovery Plane
+import { InternalServiceRegistry } from '../discovery/InternalServiceRegistry.js'
+import { DiscoveryPolicyEngine } from '../discovery/DiscoveryPolicyEngine.js'
+import { ExternalManifestPublisher } from '../discovery/ExternalManifestPublisher.js'
+import { ProtocolInjectionSwarm } from '../discovery/ProtocolInjectionSwarm.js'
+// Gateway
+import { InboundTrustMiddleware } from '../gateway/InboundTrustMiddleware.js'
+import { CounterpartyRateLimiter } from '../gateway/CounterpartyRateLimiter.js'
+import { PaymentChallengeMiddleware } from '../gateway/PaymentChallengeMiddleware.js'
+import { AgentGradeApiGateway } from '../gateway/AgentGradeApiGateway.js'
 import { getConfig } from '@shared/config'
 import { createChildLogger } from '@shared/logger'
 import type { GoalAnalyzer, TaskExecutor } from '@orchestrator/IJarvis'
-import type { KnowledgeEntry, ArtifactId } from '@shared/types'
+import type { KnowledgeEntry, ArtifactId, CommerceRail } from '@shared/types'
 import type { QueryFilters } from '@librarian/ILibrarian'
 import type { VectorMatch } from '@librarian/Librarian'
 
@@ -40,6 +74,24 @@ export interface Container {
   readonly dispatcher: DispatcherMinion
   readonly librarian: Librarian
   readonly researchBroker: IResearchBroker
+  // Trust Plane
+  readonly trustAuditLog: TrustAuditLog
+  readonly identityService: AgentIdentityService
+  readonly mandateService: MandateService
+  readonly counterpartyRegistry: CounterpartyRegistry
+  readonly verificationPolicyEngine: VerificationPolicyEngine
+  readonly reputationService: AgentReputationService
+  readonly revocationService: RevocationService
+  // Commerce Plane
+  readonly commerceOrchestrator: CommerceOrchestrator
+  readonly receiptService: ReceiptService
+  readonly walletBindingService: WalletBindingService
+  readonly treasuryService: TreasuryService
+  // Discovery Plane
+  readonly discoveryRegistry: InternalServiceRegistry
+  readonly manifestPublisher: ExternalManifestPublisher
+  // Gateway
+  readonly gateway: AgentGradeApiGateway
 }
 
 // Stub providers — used at boot until real LLM/infra providers are wired
@@ -132,7 +184,96 @@ export function createContainer(
     }
   )
 
+  // Trust Plane
+  const trustAuditLog = new TrustAuditLog()
+  const identityService = new AgentIdentityService(trustAuditLog)
+  const mandateService = new MandateService(trustAuditLog)
+  const counterpartyRegistry = new CounterpartyRegistry()
+  const verificationPolicyEngine = new VerificationPolicyEngine(identityService, mandateService)
+  const reputationService = new AgentReputationService(identityService)
+  const revocationService = new RevocationService(
+    identityService,
+    mandateService,
+    counterpartyRegistry,
+    trustAuditLog,
+  )
+
+  // Commerce Plane
+  const receiptService = new ReceiptService()
+  const quoteService = new QuoteService(counterpartyRegistry)
+  const refundPolicyEngine = new RefundPolicyEngine()
+  const disputeService = new DisputeService(receiptService)
+  const railAdapters = new Map<CommerceRail, ICommerceRailAdapter>([
+    ['stripe', new StripeCommerceAdapter()],
+    ['x402', new X402Adapter()],
+    ['coinbase_wallet', new CoinbaseWalletAdapter()],
+    ['mcp_pay', new McpPayAdapter()],
+  ])
+  const settlementReconciler = new SettlementReconciler(receiptService, railAdapters)
+  const commerceOrchestrator = new CommerceOrchestrator(
+    quoteService,
+    receiptService,
+    refundPolicyEngine,
+    settlementReconciler,
+    mandateService,
+    verificationPolicyEngine,
+    trustAuditLog,
+    railAdapters,
+  )
+  const walletPolicyEngine = new WalletPolicyEngine()
+  const walletBindingService = new WalletBindingService(identityService, trustAuditLog)
+  const treasuryLedger = new TreasuryLedger()
+  const treasuryService = new TreasuryService(walletPolicyEngine, treasuryLedger)
+
+  // Discovery Plane
+  const discoveryRegistry = new InternalServiceRegistry()
+  const discoveryPolicyEngine = new DiscoveryPolicyEngine({ minReliabilityScore: 0.7 })
+  const manifestPublisher = new ExternalManifestPublisher(discoveryRegistry, discoveryPolicyEngine)
+  const _protocolInjectionSwarm = new ProtocolInjectionSwarm([])
+
+  // Gateway
+  const inboundTrustMiddleware = new InboundTrustMiddleware(counterpartyRegistry, trustAuditLog)
+  const counterpartyRateLimiter = new CounterpartyRateLimiter()
+  const paymentChallengeMiddleware = new PaymentChallengeMiddleware(receiptService)
+  const gateway = new AgentGradeApiGateway({
+    trustMiddleware: inboundTrustMiddleware.createMiddleware(),
+    rateLimitMiddleware: counterpartyRateLimiter.createMiddleware(),
+    paymentChallengeMiddleware: paymentChallengeMiddleware.createMiddleware(),
+  })
+
+  // Suppress unused variable warning — swarm is constructed for side-effect registration
+  void _protocolInjectionSwarm
+  // Suppress unused variable warning — disputeService is constructed for side-effect wiring
+  void disputeService
+
   log.info('All components initialized')
 
-  return { factory, governor, mechanic, evalPipeline, jarvis, dispatcher, librarian, researchBroker }
+  return {
+    factory,
+    governor,
+    mechanic,
+    evalPipeline,
+    jarvis,
+    dispatcher,
+    librarian,
+    researchBroker,
+    // Trust Plane
+    trustAuditLog,
+    identityService,
+    mandateService,
+    counterpartyRegistry,
+    verificationPolicyEngine,
+    reputationService,
+    revocationService,
+    // Commerce Plane
+    commerceOrchestrator,
+    receiptService,
+    walletBindingService,
+    treasuryService,
+    // Discovery Plane
+    discoveryRegistry,
+    manifestPublisher,
+    // Gateway
+    gateway,
+  }
 }

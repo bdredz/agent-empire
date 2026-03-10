@@ -21,6 +21,20 @@ import type { QueryFilters } from '@librarian/ILibrarian'
 import type { IMechanic } from '@mechanic/IMechanic'
 import type { IResearchBroker } from '../evidence/IResearchBroker.js'
 import type { ResearchReport } from '@shared/types'
+import { TrustAuditLog } from '../trust/TrustAuditLog.js'
+import { AgentIdentityService } from '../trust/AgentIdentityService.js'
+import { MandateService } from '../trust/MandateService.js'
+import { CounterpartyRegistry } from '../trust/CounterpartyRegistry.js'
+import { VerificationPolicyEngine } from '../trust/VerificationPolicyEngine.js'
+import { AgentReputationService } from '../trust/AgentReputationService.js'
+import { RevocationService } from '../trust/RevocationService.js'
+import { ReceiptService } from '../commerce/ReceiptService.js'
+import { CommerceOrchestrator } from '../commerce/CommerceOrchestrator.js'
+import { WalletBindingService } from '../commerce/wallets/WalletBindingService.js'
+import { TreasuryService } from '../commerce/treasury/TreasuryService.js'
+import { InternalServiceRegistry } from '../discovery/InternalServiceRegistry.js'
+import { ExternalManifestPublisher } from '../discovery/ExternalManifestPublisher.js'
+import { AgentGradeApiGateway } from '../gateway/AgentGradeApiGateway.js'
 
 // ---------------------------------------------------------------------------
 // Build a test-friendly container (no Docker/DB dependencies)
@@ -78,6 +92,33 @@ function createTestContainer(): Container {
         async listEvidence() { return [] },
     }
 
+    // Trust Plane — real no-arg constructors are trivial to instantiate
+    const trustAuditLog = new TrustAuditLog()
+    const identityService = new AgentIdentityService(trustAuditLog)
+    const mandateService = new MandateService(trustAuditLog)
+    const counterpartyRegistry = new CounterpartyRegistry()
+    const verificationPolicyEngine = new VerificationPolicyEngine(identityService, mandateService)
+    const reputationService = new AgentReputationService(identityService)
+    const revocationService = new RevocationService(
+        identityService,
+        mandateService,
+        counterpartyRegistry,
+        trustAuditLog,
+    )
+
+    // Commerce Plane — stub objects where construction is complex
+    const receiptService = new ReceiptService()
+    const stubCommerceOrchestrator = {} as unknown as CommerceOrchestrator
+    const walletBindingService = new WalletBindingService(identityService, trustAuditLog)
+    const stubTreasuryService = {} as unknown as TreasuryService
+
+    // Discovery Plane
+    const discoveryRegistry = new InternalServiceRegistry()
+    const stubManifestPublisher = {} as unknown as ExternalManifestPublisher
+
+    // Gateway
+    const stubGateway = {} as unknown as AgentGradeApiGateway
+
     return {
         factory,
         governor,
@@ -87,6 +128,24 @@ function createTestContainer(): Container {
         dispatcher,
         librarian,
         researchBroker: stubResearchBroker,
+        // Trust Plane
+        trustAuditLog,
+        identityService,
+        mandateService,
+        counterpartyRegistry,
+        verificationPolicyEngine,
+        reputationService,
+        revocationService,
+        // Commerce Plane
+        commerceOrchestrator: stubCommerceOrchestrator,
+        receiptService,
+        walletBindingService,
+        treasuryService: stubTreasuryService,
+        // Discovery Plane
+        discoveryRegistry,
+        manifestPublisher: stubManifestPublisher,
+        // Gateway
+        gateway: stubGateway,
     }
 }
 
