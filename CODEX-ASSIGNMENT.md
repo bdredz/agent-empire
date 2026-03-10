@@ -367,10 +367,10 @@ CODEX owns the majority of Phase 3: contract freeze, Trust Plane, Commerce Plane
 | P3-C20 | Create `src/commerce/adapters/CoinbaseWalletAdapter.ts` + tests | 5 | 5 | P3-C11 | ✅ PASS |
 | P3-C21 | Create `src/commerce/adapters/McpPayAdapter.ts` + tests | 5 | 5 | P3-C11 | ✅ PASS |
 | P3-C22 | Create `src/commerce/adapters/AP2MandateAdapter.ts` + tests | 5 | 5 | P3-C11, P3-C5 | ✅ PASS |
-| P3-C23 | Create `src/commerce/wallets/WalletPolicyEngine.ts` + tests | 6 | 6 | P3-C1, P3-C5 | ⬜ NOT_STARTED |
-| P3-C24 | Create `src/commerce/wallets/WalletBindingService.ts` + tests | 6 | 6 | P3-C23, P3-C3 | ⬜ NOT_STARTED |
-| P3-C25 | Create `src/commerce/treasury/TreasuryService.ts` + tests | 6 | 6 | P3-C23, P3-C17 | ⬜ NOT_STARTED |
-| P3-C26 | Create `src/commerce/treasury/TreasuryLedger.ts` + tests | 6 | 6 | P3-C25 | ⬜ NOT_STARTED |
+| P3-C23 | Create `src/commerce/wallets/WalletPolicyEngine.ts` + tests | 6 | 6 | P3-C1, P3-C5 | ✅ PASS |
+| P3-C24 | Create `src/commerce/wallets/WalletBindingService.ts` + tests | 6 | 6 | P3-C23, P3-C3 | ✅ PASS |
+| P3-C25 | Create `src/commerce/treasury/TreasuryService.ts` + tests | 6 | 6 | P3-C23, P3-C17 | ✅ PASS |
+| P3-C26 | Create `src/commerce/treasury/TreasuryLedger.ts` + tests | 6 | 6 | P3-C25 | ✅ PASS |
 | P3-C27 | Create `src/gateway/AgentGradeApiGateway.ts` + tests | 8 | 8 | P3-C6, P3-C7 | ⬜ NOT_STARTED |
 | P3-C28 | Create `src/gateway/PaymentChallengeMiddleware.ts` + tests | 8 | 8 | P3-C17, P3-C27 | ⬜ NOT_STARTED |
 | P3-C29 | Create `src/gateway/InboundTrustMiddleware.ts` + tests | 8 | 8 | P3-C6, P3-C27 | ⬜ NOT_STARTED |
