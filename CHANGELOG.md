@@ -42,9 +42,9 @@ PHASE 12: CONTROL PLANE HARDENING     [PASS]        depends: 7,6,2,3,4   owner: 
 --- PHASE 2 COMPLETE (Phases 12-18) ---
 
 PHASE 3: TRUSTED EXTERNAL OPERATIONS  [PLANNED]     depends: 12-18       owner: ALL
-  Wave 1: Contract Freeze             [PLANNED]     owner: CODEX+OPUS
-  Wave 2: Trust Plane (9 services)    [PLANNED]     owner: CODEX
-  Wave 3: Evidence Plane (8 services) [PLANNED]     owner: GEMINI
+  Wave 1: Contract Freeze             [PASS]        owner: CODEX+OPUS
+  Wave 2: Trust Plane (9 services)    [IN_PROGRESS] owner: CODEX  (4/9 done)
+  Wave 3: Evidence Plane (8 services) [PASS]        owner: GEMINI
   Wave 4: Commerce Core (7 services)  [PLANNED]     owner: CODEX
   Wave 5: Provider Adapters (5 rails) [PLANNED]     owner: CODEX
   Wave 6: Wallet & Treasury (4 svcs)  [PLANNED]     owner: CODEX
@@ -63,6 +63,18 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 ---
 
 ## Log
+
+### [2026-03-10] [OPUS] — Phase 3: P3-O1/O3/O7/O9 Review + Evidence Wiring
+**Branch:** main (merged codex/phase-3-trust-commerce + agent/gemini/phase-3-evidence-discovery)
+**Status:** PASS
+**Interfaces consumed:** SourcePolicyEngine, EvidenceStore, ClaimExtractor, FreshnessScorer, CitationCompiler, ResearchReportBuilder, ResearchBroker, IResearchBroker, all Phase 3 shared contracts
+**Interfaces produced:** Updated Container (+ researchBroker), AppConfig (+ 15 Phase 3 fields), Citation, BibliographyEntry, EvidenceRecord.rawContent
+**Files created:** 1 (src/integration/evidencePlane.test.ts)
+**Files modified:** 16 (container.ts, config.ts, smoke.test.ts, types.ts, all 12 evidence files)
+**Tests:** 473/473 (57 test files)
+**Notes:** P3-O1: Merged both agent branches, resolved types.ts conflict, reconciled local evidence types → shared types. P3-O7: Added trust/evidence/commerce/wallet/gateway config. P3-O3: Wired Evidence Plane into DI, proposal sink → Librarian. P3-O9: 6 integration tests covering full research lifecycle. Trust/Commerce/Discovery wiring BLOCKED on Codex/Gemini completing services.
+
+---
 
 ### [2026-03-10] [CODEX] — Phase 3: P3-C1 Contract Freeze
 **Branch:** codex/phase-3-trust-commerce

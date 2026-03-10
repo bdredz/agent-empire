@@ -1,5 +1,26 @@
 # Agent Empire: Project Memory
 
+## 2026-03-10 — OPUS Phase 3: P3-O1, P3-O3, P3-O7, P3-O9
+
+### What changed
+- **P3-O1**: Reviewed contract freeze. Merged Codex (P3-C1/C2/C4/C9) + Gemini (P3-G1–G8) to main. Resolved types.ts merge conflict (indentation). Reconciled Evidence Plane: refactored all evidence files from local `src/evidence/types.ts` to canonical `@shared/types.js`. Added `rawContent?`, `Citation`, `BibliographyEntry` to shared types. Deleted local types file.
+- **P3-O7**: Added 15 Phase 3 config fields to `src/shared/config.ts` — trust (3), evidence (3), commerce (4), wallet (2), gateway (3). All zod-validated with env var mapping.
+- **P3-O3**: Wired Evidence Plane into DI container (`src/server/container.ts`). 7 services registered: SourcePolicyEngine, EvidenceStore, ClaimExtractor, FreshnessScorer, CitationCompiler, ResearchReportBuilder, ResearchBroker. `proposalSink` wired to `librarian.submitProposal()`. Updated smoke.test.ts for Container interface change.
+- **P3-O9**: Created `src/integration/evidencePlane.test.ts` — 6 integration tests (research lifecycle, source policy, tenant isolation, memory proposal guard, budget exhaustion, claim field completeness).
+- Total: 473/473 tests pass across 57 files, typecheck clean
+
+### Blocked tasks
+- **P3-O2** (Wire Trust Plane): BLOCKED — Codex completed P3-C2 (interface only), P3-C4 (interface only), P3-C9 (TrustAuditLog). Still needs P3-C3, C5, C6, C7, C8, C10 service implementations.
+- **P3-O4** (Wire Commerce Plane): BLOCKED — Codex hasn't started P3-C11–C17.
+- **P3-O5** (Wire Discovery Plane): BLOCKED — Gemini hasn't started P3-G9–G12.
+- **P3-O6** (Wire Gateway): BLOCKED — Codex hasn't started P3-C27–C30.
+
+### Gotchas
+- Gemini's Evidence Plane used local types with different field names (`fetchTimestamp` vs `fetchedAt`, `confidenceScore` vs `confidence`). Always validate subagent type usage against shared types.
+- Container wiring went to worktree branch — always merge worktree commits to main before continuing.
+- `.claude/worktrees/` was accidentally tracked by git — added to `.gitignore`.
+- Evidence services use relative imports (`../evidence/...`) not path aliases — no `@evidence/*` alias exists yet.
+
 ## 2026-03-10 — Phase 3 Task Distribution Complete
 
 ### What changed
