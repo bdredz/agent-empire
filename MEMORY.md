@@ -57,6 +57,19 @@
 ### Gotchas
 - Full verification stayed green after contract freeze (`npx tsc --noEmit`, `npx vitest run`: 406/406 passing).
 
+## 2026-03-10 — Branch Ownership Discipline (Codex)
+
+### What changed
+- Added an explicit operating rule: Codex must always return to and work from `codex/phase-3-trust-commerce` before making edits.
+- Confirmed parallel multi-agent work is safe when each agent stays on its own branch.
+
+### Decisions
+- Branch pre-flight is mandatory before edits and commits: run `git branch --show-current`.
+- If current branch is not Codex-owned, immediately switch back before proceeding.
+
+### Gotchas
+- Concurrent agent activity can change repo context visibility; enforce branch checks at every task boundary to prevent cross-branch contamination.
+
 ## 2026-03-08 — Phase 2 OPUS Complete: P2-O4 through P2-O8
 ### What changed
 - **P2-O4**: EvalPipeline.ts AuditMinion front-run — optional IAuditMinion (5th constructor param), Stage 0 audit before deterministic eval (reject→Fail, warn→continue, pass→silent). `EvalInput` gained `agentId`, `EvalStage` expanded with `'audit'`. 4 new tests.
