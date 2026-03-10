@@ -43,15 +43,15 @@ PHASE 12: CONTROL PLANE HARDENING     [PASS]        depends: 7,6,2,3,4   owner: 
 
 PHASE 3: TRUSTED EXTERNAL OPERATIONS  [PLANNED]     depends: 12-18       owner: ALL
   Wave 1: Contract Freeze             [PASS]        owner: CODEX+OPUS
-  Wave 2: Trust Plane (9 services)    [IN_PROGRESS] owner: CODEX  (4/9 done)
+  Wave 2: Trust Plane (9 services)    [PASS]        owner: CODEX
   Wave 3: Evidence Plane (8 services) [PASS]        owner: GEMINI
-  Wave 4: Commerce Core (7 services)  [PLANNED]     owner: CODEX
-  Wave 5: Provider Adapters (5 rails) [PLANNED]     owner: CODEX
-  Wave 6: Wallet & Treasury (4 svcs)  [PLANNED]     owner: CODEX
-  Wave 7: Discovery Plane (4 services)[PLANNED]     owner: GEMINI
+  Wave 4: Commerce Core (7 services)  [PASS]        owner: CODEX
+  Wave 5: Provider Adapters (5 rails) [PASS]        owner: CODEX
+  Wave 6: Wallet & Treasury (4 svcs)  [PASS]        owner: CODEX
+  Wave 7: Discovery Plane (4 services)[PASS]        owner: GEMINI
   Wave 7b: Hive Mind V2 + Dashboard   [PLANNED]     owner: GEMINI
-  Wave 8: Gateway Hardening (4 svcs)  [PLANNED]     owner: CODEX
-  Wave 9: Integration & Chaos         [PLANNED]     owner: OPUS
+  Wave 8: Gateway Hardening (4 svcs)  [PASS]        owner: CODEX
+  Wave 9: Integration & Chaos         [IN_PROGRESS] owner: OPUS (O8/O10 done, O11/O12 pending)
 PHASE 13: MEMORY SPINE & TENANCY      [PASS]        depends: 12,6        owner: CODEX
 PHASE 14: DURABILITY & CHECKPOINTING  [PASS]        depends: 12          owner: CODEX
 PHASE 15: TELEMETRY & AUDIT MINIONS   [PASS]        depends: 12,2,3      owner: CODEX+GEMINI
@@ -63,6 +63,17 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 ---
 
 ## Log
+
+### [2026-03-10] [OPUS] — Phase 3: P3-O2/O4/O5/O6/O8/O10 Full Plane Wiring + Integration Tests
+**Branch:** main (merged from claude/hopeful-euler worktree)
+**Status:** PASS
+**Interfaces consumed:** AgentIdentityService, MandateService, CounterpartyRegistry, VerificationPolicyEngine, AgentReputationService, RevocationService, TrustAuditLog, CommerceOrchestrator, QuoteService, ReceiptService, RefundPolicyEngine, DisputeService, SettlementReconciler, StripeCommerceAdapter, X402Adapter, CoinbaseWalletAdapter, McpPayAdapter, WalletPolicyEngine, WalletBindingService, TreasuryLedger, TreasuryService, InternalServiceRegistry, DiscoveryPolicyEngine, ExternalManifestPublisher, ProtocolInjectionSwarm, AgentGradeApiGateway, InboundTrustMiddleware, CounterpartyRateLimiter, PaymentChallengeMiddleware
+**Interfaces produced:** Container (expanded with 14 new members)
+**Files created:** 2 (integration tests) + 2 modified (container.ts, smoke.test.ts)
+**Tests:** 711/711 (88 files)
+**Notes:** All 4 Phase 3 planes wired into DI container. Gateway middleware uses `.createMiddleware()` pattern. AP2MandateAdapter is NOT a rail adapter — excluded from rail map. Trust integration tests cover L0-L3 enforcement, cascading revocation, audit trail. Commerce integration tests cover full quote→auth→capture lifecycle, dispute flow, reconciliation.
+
+---
 
 ### [2026-03-10] [OPUS] — Phase 3: P3-O1/O3/O7/O9 Review + Evidence Wiring
 **Branch:** main (merged codex/phase-3-trust-commerce + agent/gemini/phase-3-evidence-discovery)

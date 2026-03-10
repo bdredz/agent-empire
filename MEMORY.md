@@ -1,5 +1,22 @@
 # Agent Empire: Project Memory
 
+## 2026-03-10 — OPUS Phase 3: P3-O2/O4/O5/O6/O8/O10 (All Planes Wired + Integration Tests)
+
+### What changed
+- **P3-O2/O4/O5/O6**: Wired ALL four Phase 3 planes into DI container (`src/server/container.ts`):
+  - Trust Plane: TrustAuditLog, AgentIdentityService, MandateService, CounterpartyRegistry, VerificationPolicyEngine, AgentReputationService, RevocationService
+  - Commerce Plane: CommerceOrchestrator, ReceiptService, QuoteService, RefundPolicyEngine, SettlementReconciler, DisputeService, 4 rail adapters (Stripe, X402, Coinbase, McpPay), WalletPolicyEngine, WalletBindingService, TreasuryLedger, TreasuryService
+  - Discovery Plane: InternalServiceRegistry (as discoveryRegistry), DiscoveryPolicyEngine, ExternalManifestPublisher, ProtocolInjectionSwarm
+  - Gateway: InboundTrustMiddleware, CounterpartyRateLimiter, PaymentChallengeMiddleware, AgentGradeApiGateway (wired via `.createMiddleware()`)
+  - Container interface expanded with 14 new readonly members. Updated smoke.test.ts stubs.
+- **P3-O8**: Created `src/integration/trustPlane.test.ts` — 7 integration tests (identity lifecycle, mandate lifecycle, trust level enforcement L0-L3, counterparty registration/blocking, reputation tracking, cascading revocation, audit trail completeness)
+- **P3-O10**: Created `src/integration/commercePlane.test.ts` — 12 integration tests (quote creation, authorize→capture flow, mandate rejection, trust level gate, auto-refund, manual review threshold, refund policy engine, receipt tracking, settlement reconciliation, settlement mismatch, dispute flow, dispute rejection on refunded receipt)
+- Total: 711/711 tests pass across 88 files, typecheck clean
+
+### Remaining OPUS tasks
+- **P3-O11**: Cross-plane integration tests (trust→commerce mandate check)
+- **P3-O12**: Chaos protocol tests (revocation cascade, wallet freeze, evidence freshness failure, rail failure, counterparty block mid-flow, mandate expiry during auth)
+
 ## 2026-03-10 — OPUS Phase 3: P3-O1, P3-O3, P3-O7, P3-O9
 
 ### What changed
@@ -8,12 +25,6 @@
 - **P3-O3**: Wired Evidence Plane into DI container (`src/server/container.ts`). 7 services registered: SourcePolicyEngine, EvidenceStore, ClaimExtractor, FreshnessScorer, CitationCompiler, ResearchReportBuilder, ResearchBroker. `proposalSink` wired to `librarian.submitProposal()`. Updated smoke.test.ts for Container interface change.
 - **P3-O9**: Created `src/integration/evidencePlane.test.ts` — 6 integration tests (research lifecycle, source policy, tenant isolation, memory proposal guard, budget exhaustion, claim field completeness).
 - Total: 473/473 tests pass across 57 files, typecheck clean
-
-### Blocked tasks
-- **P3-O2** (Wire Trust Plane): BLOCKED — Codex completed P3-C2 (interface only), P3-C4 (interface only), P3-C9 (TrustAuditLog). Still needs P3-C3, C5, C6, C7, C8, C10 service implementations.
-- **P3-O4** (Wire Commerce Plane): BLOCKED — Codex hasn't started P3-C11–C17.
-- **P3-O5** (Wire Discovery Plane): BLOCKED — Gemini hasn't started P3-G9–G12.
-- **P3-O6** (Wire Gateway): BLOCKED — Codex hasn't started P3-C27–C30.
 
 ### Gotchas
 - Gemini's Evidence Plane used local types with different field names (`fetchTimestamp` vs `fetchedAt`, `confidenceScore` vs `confidence`). Always validate subagent type usage against shared types.
