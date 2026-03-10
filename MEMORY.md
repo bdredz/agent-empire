@@ -1,5 +1,43 @@
 # Agent Empire: Project Memory
 
+## 2026-03-10 — Phase 3 Task Distribution Complete
+
+### What changed
+- Analyzed `phase-3-master-blueprint-agent-empire.md` (1050 lines) and distributed 59 tasks across 3 agents
+- **CODEX**: 30 tasks (P3-C1–C30, ~55%) — Trust Plane, Commerce Plane, Provider Adapters, Wallet/Treasury, Gateway Hardening
+- **GEMINI**: 17 tasks (P3-G1–G17, ~30%) — Evidence Plane, Discovery Plane, Hive Mind V2, Dashboard Components
+- **OPUS**: 12 tasks (P3-O1–O12, ~15%) — Contract review, DI wiring, Integration tests, Chaos protocol
+- Branch discipline: each agent works in own branch, pushes to main only when task verified
+  - Codex: `agent/codex/phase-3-trust-commerce`
+  - Gemini: `agent/gemini/phase-3-evidence-discovery`
+  - Opus: `agent/opus/phase-3-integration`
+
+### Wave Execution Order
+1. Wave 1 (Contract Freeze): P3-C1 + P3-O1 — shared types in types.ts
+2. Wave 2 (Trust Plane): P3-C2–C10 — 9 trust services
+3. Wave 3 (Evidence Plane): P3-G1–G8 — 8 evidence services
+4. Wave 4 (Commerce Core): P3-C11–C17 — 7 commerce services
+5. Wave 5 (Provider Adapters): P3-C18–C22 — 5 rail adapters
+6. Wave 6 (Wallet & Treasury): P3-C23–C26 — 4 services
+7. Wave 7 (Discovery Plane): P3-G9–G12 — 4 services
+8. Wave 7b (Hive Mind V2 + Dashboard): P3-G13–G17 — 5 components
+9. Wave 8 (Gateway): P3-C27–C30 — 4 gateway services
+10. Wave 9 (Integration): P3-O2–O12 — DI wiring, integration tests, chaos protocol
+
+### New Planes (Phase 3)
+- **Trust Plane** (`src/trust/`): AgentIdentity, MandateRegistry, VerificationPolicy, CounterpartyRegistry, ReputationEngine, TrustAuditLog, RevocationManager, TrustLevelEnforcer, TrustDIModule
+- **Evidence Plane** (`src/evidence/`): ResearchBroker, SourcePolicy, EvidenceStore, ClaimExtractor, FreshnessScorer, CitationLinker, ResearchReportBuilder, EvidenceDIModule
+- **Commerce Plane** (`src/commerce/`): CommerceOrchestrator, QuoteEngine, AuthorizationService, CaptureService, SettlementReconciler, DisputeHandler, RefundService, CommerceDIModule
+- **Discovery Plane** (`src/discovery/`): InternalServiceRegistry, ExternalManifestPublisher, DiscoveryPolicy, ProtocolInjection
+- **Gateway** (`src/gateway/`): AgentGateway, PaymentChallengeMiddleware, InboundTrustVerifier, CounterpartyRateLimiter
+
+### Key Type Additions (Section 9 of blueprint)
+- Trust: `AgentIdentity`, `Mandate`, `CounterpartyRecord`, `TrustLevel` (0-4), `TrustAuditEntry`
+- Evidence: `EvidenceRecord`, `AtomicClaim`, `ResearchReport`
+- Commerce: `CommerceQuote`, `PaymentAuthorization`, `CommerceReceipt`, `CommerceRail`, `CommerceEvent`
+- Wallet: `WalletPolicy`, `TreasuryBalance`
+- Discovery: `ExternalCapabilityManifest`
+
 ## 2026-03-08 — Phase 2 OPUS Complete: P2-O4 through P2-O8
 ### What changed
 - **P2-O4**: EvalPipeline.ts AuditMinion front-run — optional IAuditMinion (5th constructor param), Stage 0 audit before deterministic eval (reject→Fail, warn→continue, pass→silent). `EvalInput` gained `agentId`, `EvalStage` expanded with `'audit'`. 4 new tests.
