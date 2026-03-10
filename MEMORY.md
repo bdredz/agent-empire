@@ -356,3 +356,16 @@ constructor(
 
 ### Gotchas
 - `IBudgetGovernor` does not naturally emit events under the `EventEmitter` model out-of-the-box in the same way `SystemEvent` works inside the minion; the minion relies on injected global emitter for `CircuitBreakerTripped`.
+
+## 2026-03-10 — Phase 3 Trust Plane: Reputation + Revocation
+### What changed
+- Added `AgentReputationService` with event-based trust scoring/reporting and deterministic tests (`src/trust/AgentReputationService.ts`, `src/trust/AgentReputationService.test.ts`).
+- Added `RevocationService` + `RevocationSupport` to implement tenant-safe agent/mandate/counterparty revocation and wallet freeze flows with audit + `SystemEvent` emission (`src/trust/RevocationService.ts`, `src/trust/RevocationSupport.ts`, `src/trust/RevocationService.test.ts`).
+- Updated `CODEX-ASSIGNMENT.md` statuses: `P3-C8` and `P3-C10` marked `PASS`.
+
+### Decisions
+- Architecture map: `AgentIdentityService` + `MandateService` + `CounterpartyRegistry` -> `RevocationService` -> `TrustAuditLog` + `EventEmitter(SystemEvent)`.
+- Kept revocation side effects idempotent (`already revoked/blocked/frozen` returns no-op behavior) to make retry paths safe.
+
+### Gotchas
+- `IssueAgentIdentityParams` does not accept direct `agentId`; tests must create identities through `ownerId` and use returned branded IDs.
