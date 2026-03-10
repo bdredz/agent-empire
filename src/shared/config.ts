@@ -34,6 +34,31 @@ const configSchema = z.object({
   checkpointStoreType: z.enum(['postgres', 'redis', 'none']).default('none'),
   checkpointTtlMs: z.coerce.number().default(3600000),
   waitConditionPollIntervalMs: z.coerce.number().default(5000),
+
+  // Phase 3 — Trust
+  trustAuditLogPath: z.string().default('.data/trust-audit.jsonl'),
+  defaultTrustLevel: z.coerce.number().min(0).max(4).default(1),
+  mandateDefaultExpiryMs: z.coerce.number().default(86400000), // 24h
+
+  // Phase 3 — Evidence
+  researchMaxSources: z.coerce.number().default(5),
+  researchDefaultFreshness: z.enum(['realtime', 'recent', 'any']).default('recent'),
+  evidenceStorePath: z.string().default('.data/evidence-store.jsonl'),
+
+  // Phase 3 — Commerce
+  defaultPaymentRail: z.enum(['stripe', 'x402', 'coinbase', 'mcp_pay', 'ap2']).default('stripe'),
+  quoteExpiryMs: z.coerce.number().default(900000), // 15 min
+  autoRefundThreshold: z.coerce.number().default(50),
+  manualReviewThreshold: z.coerce.number().default(500),
+
+  // Phase 3 — Wallet
+  walletDefaultMaxPerTransaction: z.coerce.number().default(100),
+  walletDefaultMaxDailyOutflow: z.coerce.number().default(1000),
+
+  // Phase 3 — Gateway
+  gatewayRateLimitTrusted: z.coerce.number().default(1000),
+  gatewayRateLimitWatch: z.coerce.number().default(100),
+  gatewayRateLimitUnknown: z.coerce.number().default(20),
 })
 
 export type AppConfig = z.infer<typeof configSchema>
@@ -63,6 +88,22 @@ export function loadConfig(): AppConfig {
     checkpointStoreType: process.env.CHECKPOINT_STORE_TYPE,
     checkpointTtlMs: process.env.CHECKPOINT_TTL_MS,
     waitConditionPollIntervalMs: process.env.WAIT_CONDITION_POLL_INTERVAL_MS,
+    // Phase 3
+    trustAuditLogPath: process.env.TRUST_AUDIT_LOG_PATH,
+    defaultTrustLevel: process.env.DEFAULT_TRUST_LEVEL,
+    mandateDefaultExpiryMs: process.env.MANDATE_DEFAULT_EXPIRY_MS,
+    researchMaxSources: process.env.RESEARCH_MAX_SOURCES,
+    researchDefaultFreshness: process.env.RESEARCH_DEFAULT_FRESHNESS,
+    evidenceStorePath: process.env.EVIDENCE_STORE_PATH,
+    defaultPaymentRail: process.env.DEFAULT_PAYMENT_RAIL,
+    quoteExpiryMs: process.env.QUOTE_EXPIRY_MS,
+    autoRefundThreshold: process.env.AUTO_REFUND_THRESHOLD,
+    manualReviewThreshold: process.env.MANUAL_REVIEW_THRESHOLD,
+    walletDefaultMaxPerTransaction: process.env.WALLET_DEFAULT_MAX_PER_TRANSACTION,
+    walletDefaultMaxDailyOutflow: process.env.WALLET_DEFAULT_MAX_DAILY_OUTFLOW,
+    gatewayRateLimitTrusted: process.env.GATEWAY_RATE_LIMIT_TRUSTED,
+    gatewayRateLimitWatch: process.env.GATEWAY_RATE_LIMIT_WATCH,
+    gatewayRateLimitUnknown: process.env.GATEWAY_RATE_LIMIT_UNKNOWN,
   })
 
   if (!result.success) {
