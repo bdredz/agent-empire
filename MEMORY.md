@@ -369,3 +369,19 @@ constructor(
 
 ### Gotchas
 - `IssueAgentIdentityParams` does not accept direct `agentId`; tests must create identities through `ownerId` and use returned branded IDs.
+
+## 2026-03-10 — Phase 3 Commerce + Gateway Buildout
+
+### What changed
+- Completed Phase 3 commerce contracts/core execution path through `P3-C17` and finished Wave 5 (`P3-C18`–`P3-C22`) with stubbed rail adapters: Stripe, x402, Coinbase Wallet, MCP Pay, and AP2 mandate adapter.
+- Completed Wave 6 (`P3-C23`–`P3-C26`) with `WalletPolicyEngine`, `WalletBindingService`, `TreasuryLedger`, and `TreasuryService` (append-only treasury journaling + wallet policy enforcement).
+- Completed Wave 8 (`P3-C27`–`P3-C30`) with `AgentGradeApiGateway`, `InboundTrustMiddleware`, `CounterpartyRateLimiter`, and `PaymentChallengeMiddleware`, plus full test coverage for each module.
+
+### Decisions
+- Kept Phase 3 adapters deterministic and in-memory by design (contract-faithful stubs only; no external provider calls), matching Phase 3 guardrails.
+- Split treasury helpers into `TreasuryServiceSupport.ts` to maintain file-size constraints and keep service orchestration logic bounded.
+- Architecture map: `AgentGradeApiGateway -> InboundTrustMiddleware -> CounterpartyRateLimiter -> PaymentChallengeMiddleware -> RouteHandler`; `CommerceOrchestrator -> RailAdapters -> ReceiptService/DisputeService/SettlementReconciler`; `WalletPolicyEngine -> TreasuryService -> TreasuryLedger`.
+
+### Gotchas
+- Full-suite runs can occasionally show a transient `TelemetryMinion` anomaly test failure; isolated rerun passed and subsequent full-suite rerun passed.
+- `TrustAuditEntry.eventType` lacks a wallet-unbound-specific variant, so wallet unbind audit records use `verification_override` with explicit `action: wallet_unbound` details.
