@@ -401,3 +401,14 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 **Files created:** 16 (8 src files + 8 test files)
 **Tests:** 54/54 on Evidence Plane
 **Notes:** Completed Wave 3. Created full deterministic evidence pipeline without LLMs. SourcePolicyEngine handles tier assignments. EvidenceStore handles content hashing and deduplication. ClaimExtractor runs syntactical claim splitting and heuristic confidence scoring. FreshnessScorer applies tier-based exponential decay. CitationCompiler outputs Markdown bibliography and embedded tags. ResearchReportBuilder identifies gaps. ResearchBroker orchestrates the pipeline and emits MemoryProposals without direct Librarian writes. Type `research_facts` added to MemoryKind.
+
+---
+
+### [2026-03-10] [GEMINI] — Phase 3: Discovery Plane (Wave 4)
+**Branch:** agent/gemini/phase-3-evidence-discovery
+**Status:** PASS
+**Interfaces consumed:** ExternalCapabilityManifest, ExternalManifestId
+**Interfaces produced:** InternalServiceRegistry, ExternalManifestPublisher, DiscoveryPolicyEngine, ProtocolInjectionSwarm
+**Files created:** 8 (4 src files + 4 test files)
+**Tests:** 28/28 on Discovery Plane
+**Notes:** Completed Wave 4 (P3-G9 to P3-G12). Built `InternalServiceRegistry` for robust cataloging of `ExternalCapabilityManifest`s. Implemented `DiscoveryPolicyEngine` handling trust badges and reliability score cut-offs. Created `ExternalManifestPublisher` to cleanly format subset of publishable services into pseudo-JSON. Built idempotent `ProtocolInjectionSwarm` logic to simulate external registry broadcasts.
