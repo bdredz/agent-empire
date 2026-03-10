@@ -38,6 +38,25 @@
 - Wallet: `WalletPolicy`, `TreasuryBalance`
 - Discovery: `ExternalCapabilityManifest`
 
+## 2026-03-10 — Phase 3 Codex: P3-C1 Contract Freeze
+
+### What changed
+- Added all Wave 1 Phase 3 contracts to `src/shared/types.ts` for Trust, Evidence, Commerce, Treasury, and Discovery surfaces.
+- Added branded ID aliases plus creators for new entities (`MandateId`, `CounterpartyId`, `QuoteId`, `ReceiptId`, `EvidenceId`, and related audit/event IDs).
+- Kept Phase 2 types untouched while introducing additive Phase 3 unions/interfaces (`CommerceRail`, `TrustLevel`, `TrustAuditEntry`, `CommerceEvent`, `ExternalCapabilityManifest`).
+
+### Decisions
+- Reused the existing branded-type pattern from `AgentId`/`TaskId` and linked new contracts to existing shared types (`AgentRole`, `AgentId`).
+- Preserved separate manifest models: `CapabilityManifest` (internal Phase 2) and `ExternalCapabilityManifest` (Phase 3 discovery edge).
+
+### Architecture Map
+- Trust Plane → Commerce Plane → Gateway
+- Evidence Plane → Trust/Commerce decision inputs
+- Discovery Plane → External capability exposure
+
+### Gotchas
+- Full verification stayed green after contract freeze (`npx tsc --noEmit`, `npx vitest run`: 406/406 passing).
+
 ## 2026-03-08 — Phase 2 OPUS Complete: P2-O4 through P2-O8
 ### What changed
 - **P2-O4**: EvalPipeline.ts AuditMinion front-run — optional IAuditMinion (5th constructor param), Stage 0 audit before deterministic eval (reject→Fail, warn→continue, pass→silent). `EvalInput` gained `agentId`, `EvalStage` expanded with `'audit'`. 4 new tests.

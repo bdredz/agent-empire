@@ -747,3 +747,243 @@ export interface CapabilityManifest {
   reliabilityScore?: number
   createdAt: string
 }
+
+// -----------------------------------------------------------------------------
+// 19. PHASE 3 CONTRACTS (TRUST, EVIDENCE, COMMERCE, DISCOVERY)
+// -----------------------------------------------------------------------------
+
+export type MandateId = string & { readonly __brand: 'MandateId' }
+export type CounterpartyId = string & { readonly __brand: 'CounterpartyId' }
+export type EvidenceId = string & { readonly __brand: 'EvidenceId' }
+export type ClaimId = string & { readonly __brand: 'ClaimId' }
+export type ReportId = string & { readonly __brand: 'ReportId' }
+export type QuoteId = string & { readonly __brand: 'QuoteId' }
+export type AuthorizationId = string & { readonly __brand: 'AuthorizationId' }
+export type ReceiptId = string & { readonly __brand: 'ReceiptId' }
+export type WalletPolicyId = string & { readonly __brand: 'WalletPolicyId' }
+export type ExternalManifestId = string & { readonly __brand: 'ExternalManifestId' }
+export type TrustAuditEntryId = string & { readonly __brand: 'TrustAuditEntryId' }
+export type CommerceEventId = string & { readonly __brand: 'CommerceEventId' }
+
+export const createMandateId = (id: string): MandateId => id as MandateId
+export const createCounterpartyId = (id: string): CounterpartyId => id as CounterpartyId
+export const createEvidenceId = (id: string): EvidenceId => id as EvidenceId
+export const createClaimId = (id: string): ClaimId => id as ClaimId
+export const createReportId = (id: string): ReportId => id as ReportId
+export const createQuoteId = (id: string): QuoteId => id as QuoteId
+export const createAuthorizationId = (id: string): AuthorizationId =>
+  id as AuthorizationId
+export const createReceiptId = (id: string): ReceiptId => id as ReceiptId
+export const createWalletPolicyId = (id: string): WalletPolicyId =>
+  id as WalletPolicyId
+export const createExternalManifestId = (id: string): ExternalManifestId =>
+  id as ExternalManifestId
+export const createTrustAuditEntryId = (id: string): TrustAuditEntryId =>
+  id as TrustAuditEntryId
+export const createCommerceEventId = (id: string): CommerceEventId =>
+  id as CommerceEventId
+
+export interface AgentIdentity {
+  agentId: AgentId
+  tenantId: string
+  businessUnitId?: string
+  ownerType: 'user' | 'organization' | 'system'
+  ownerId: string
+  role: AgentRole
+  verificationStatus: 'unverified' | 'verified' | 'restricted' | 'revoked'
+  walletBindings: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface Mandate {
+  mandateId: MandateId
+  tenantId: string
+  businessUnitId?: string
+  principalId: string
+  delegatedAgentId: AgentId
+  purpose: string
+  scope: string[]
+  maxAmount?: number
+  currency?: string
+  allowedMerchants?: string[]
+  allowedCategories?: string[]
+  expiresAt: string
+  status: 'active' | 'expired' | 'revoked' | 'consumed'
+  createdAt: string
+}
+
+export interface CounterpartyRecord {
+  counterpartyId: CounterpartyId
+  displayName: string
+  counterpartyType: 'merchant' | 'mcp_server' | 'api_provider' | 'agent_platform'
+  trustStatus: 'trusted' | 'watch' | 'blocked' | 'unknown'
+  riskScore: number
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface EvidenceRecord {
+  evidenceId: EvidenceId
+  tenantId: string
+  questionId: string
+  sourceUrl: string
+  sourceType: 'webpage' | 'api' | 'document' | 'registry'
+  fetchedAt: string
+  publishedAt?: string
+  contentHash: string
+  trustScore: number
+  freshnessScore: number
+}
+
+export interface AtomicClaim {
+  claimId: ClaimId
+  evidenceId: EvidenceId
+  statement: string
+  confidence: number
+  extractedAt: string
+}
+
+export interface ResearchReport {
+  reportId: ReportId
+  tenantId: string
+  question: string
+  answer: string
+  claims: AtomicClaim[]
+  evidenceIds: EvidenceId[]
+  freshnessDate: string
+  confidence: number
+  gaps: string[]
+  recommendedNextAction?: string
+}
+
+export type CommerceRail = 'stripe' | 'x402' | 'mcp_pay' | 'coinbase_wallet'
+
+export interface CommerceQuote {
+  quoteId: QuoteId
+  tenantId: string
+  businessUnitId?: string
+  counterpartyId: CounterpartyId
+  lineItems: Array<{
+    description: string
+    amount: number
+    currency: string
+    quantity: number
+  }>
+  totalAmount: number
+  currency: string
+  expiresAt: string
+  createdAt: string
+}
+
+export interface PaymentAuthorization {
+  authorizationId: AuthorizationId
+  tenantId: string
+  businessUnitId?: string
+  agentId: AgentId
+  mandateId?: MandateId
+  quoteId?: QuoteId
+  rail: CommerceRail
+  status: 'authorized' | 'challenged' | 'denied' | 'expired'
+  amount: number
+  currency: string
+  createdAt: string
+}
+
+export interface CommerceReceipt {
+  receiptId: ReceiptId
+  tenantId: string
+  businessUnitId?: string
+  agentId: AgentId
+  counterpartyId: CounterpartyId
+  rail: CommerceRail
+  externalTransactionId?: string
+  mandateId?: MandateId
+  quoteId?: QuoteId
+  amount: number
+  currency: string
+  status: 'pending' | 'settled' | 'failed' | 'refunded' | 'credited'
+  createdAt: string
+}
+
+export interface WalletPolicy {
+  walletPolicyId: WalletPolicyId
+  tenantId: string
+  walletId: string
+  maxPerTransaction?: number
+  maxPerSession?: number
+  maxDailyOutflow?: number
+  allowedAssets: string[]
+  allowedMerchants?: string[]
+  allowedCategories?: string[]
+  requiresManualApprovalAbove?: number
+}
+
+export interface ExternalCapabilityManifest {
+  manifestId: ExternalManifestId
+  tenantId: string
+  businessUnitId: string
+  serviceName: string
+  version: string
+  baseUrl: string
+  authScheme: 'api_key' | 'oauth' | 'a402' | 'internal_only'
+  paymentRail?: 'stripe' | 'x402' | 'mcp_pay'
+  supportedOperations: string[]
+  reliabilityScore?: number
+  trustBadge?: string
+  createdAt: string
+}
+
+export type TrustLevel = 0 | 1 | 2 | 3 | 4
+
+export interface TrustAuditEntry {
+  entryId: TrustAuditEntryId
+  tenantId: string
+  eventType:
+    | 'identity_issued'
+    | 'identity_verified'
+    | 'identity_revoked'
+    | 'mandate_created'
+    | 'mandate_revoked'
+    | 'mandate_consumed'
+    | 'counterparty_added'
+    | 'counterparty_blocked'
+    | 'verification_override'
+    | 'wallet_bound'
+    | 'wallet_frozen'
+  subjectId: string
+  actorId: string
+  details: Record<string, unknown>
+  timestamp: string
+}
+
+export interface CommerceEvent {
+  eventId: CommerceEventId
+  tenantId: string
+  eventType:
+    | 'quote_created'
+    | 'authorized'
+    | 'challenged'
+    | 'captured'
+    | 'settled'
+    | 'refunded'
+    | 'credited'
+    | 'disputed'
+    | 'reconciled'
+  receiptId?: ReceiptId
+  quoteId?: QuoteId
+  amount: number
+  currency: string
+  rail: CommerceRail
+  timestamp: string
+}
+
+export interface TreasuryBalance {
+  walletId: string
+  tenantId: string
+  asset: string
+  available: number
+  held: number
+  updatedAt: string
+}

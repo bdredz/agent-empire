@@ -64,6 +64,15 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 
 ## Log
 
+### [2026-03-10] [CODEX] — Phase 3: P3-C1 Contract Freeze
+**Branch:** codex/phase-3-trust-commerce
+**Status:** PASS
+**Interfaces consumed:** AgentId, AgentRole, Budget, TaskDAG, existing Phase 2 contracts in `src/shared/types.ts`
+**Interfaces produced:** AgentIdentity, Mandate, CounterpartyRecord, EvidenceRecord, AtomicClaim, ResearchReport, CommerceQuote, PaymentAuthorization, CommerceReceipt, WalletPolicy, ExternalCapabilityManifest, CommerceRail, TrustLevel, TrustAuditEntry, CommerceEvent, TreasuryBalance, new branded ID aliases
+**Files created:** 0
+**Tests:** 406/406
+**Notes:** Added Wave 1 Phase 3 shared contracts to `src/shared/types.ts` with additive backward-compatible changes only. Kept internal `CapabilityManifest` separate from new `ExternalCapabilityManifest`.
+
 ### [2026-03-10] [OPUS] — Phase 3: Task Distribution & Assignment
 **Branch:** claude/hopeful-euler → main
 **Status:** PLANNED
