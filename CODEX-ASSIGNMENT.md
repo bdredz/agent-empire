@@ -347,34 +347,34 @@ CODEX owns the majority of Phase 3: contract freeze, Trust Plane, Commerce Plane
 |---|------|------|-----|------------|--------|
 | P3-C1 | Freeze Phase 3 contracts in `src/shared/types.ts` | 1 | 1 | None | ✅ PASS |
 | P3-C2 | Create `src/trust/IAgentIdentityService.ts` | 2 | 2 | P3-C1 | ✅ PASS |
-| P3-C3 | Create `src/trust/AgentIdentityService.ts` + tests | 2 | 2 | P3-C2 | ⬜ NOT_STARTED |
+| P3-C3 | Create `src/trust/AgentIdentityService.ts` + tests | 2 | 2 | P3-C2 | ✅ PASS |
 | P3-C4 | Create `src/trust/IMandateService.ts` | 2 | 2 | P3-C1 | ✅ PASS |
-| P3-C5 | Create `src/trust/MandateService.ts` + tests | 2 | 2 | P3-C4 | ⬜ NOT_STARTED |
-| P3-C6 | Create `src/trust/VerificationPolicyEngine.ts` + tests | 2 | 2 | P3-C2, P3-C4 | ⬜ NOT_STARTED |
-| P3-C7 | Create `src/trust/CounterpartyRegistry.ts` + tests | 2 | 2 | P3-C1 | ⬜ NOT_STARTED |
-| P3-C8 | Create `src/trust/AgentReputationService.ts` + tests | 2 | 2 | P3-C3, P3-C7 | ⬜ NOT_STARTED |
+| P3-C5 | Create `src/trust/MandateService.ts` + tests | 2 | 2 | P3-C4 | ✅ PASS |
+| P3-C6 | Create `src/trust/VerificationPolicyEngine.ts` + tests | 2 | 2 | P3-C2, P3-C4 | ✅ PASS |
+| P3-C7 | Create `src/trust/CounterpartyRegistry.ts` + tests | 2 | 2 | P3-C1 | ✅ PASS |
+| P3-C8 | Create `src/trust/AgentReputationService.ts` + tests | 2 | 2 | P3-C3, P3-C7 | ✅ PASS |
 | P3-C9 | Create `src/trust/TrustAuditLog.ts` + tests | 2 | 2 | P3-C1 | ✅ PASS |
-| P3-C10 | Create `src/trust/RevocationService.ts` + tests | 2 | 2 | P3-C3, P3-C5, P3-C9 | ⬜ NOT_STARTED |
-| P3-C11 | Create `src/commerce/ICommerceOrchestrator.ts` + `ICommerceRailAdapter.ts` | 4 | 4 | P3-C1 | ⬜ NOT_STARTED |
-| P3-C12 | Create `src/commerce/QuoteService.ts` + tests | 4 | 4 | P3-C11 | ⬜ NOT_STARTED |
-| P3-C13 | Create `src/commerce/ReceiptService.ts` + tests | 4 | 4 | P3-C11 | ⬜ NOT_STARTED |
-| P3-C14 | Create `src/commerce/DisputeService.ts` + tests | 4 | 4 | P3-C13 | ⬜ NOT_STARTED |
-| P3-C15 | Create `src/commerce/RefundPolicyEngine.ts` + tests | 4 | 4 | P3-C13 | ⬜ NOT_STARTED |
-| P3-C16 | Create `src/commerce/SettlementReconciler.ts` + tests | 4 | 4 | P3-C13 | ⬜ NOT_STARTED |
-| P3-C17 | Create `src/commerce/CommerceOrchestrator.ts` + tests | 4 | 4 | P3-C12, P3-C13, P3-C14, P3-C15, P3-C16 | ⬜ NOT_STARTED |
-| P3-C18 | Create `src/commerce/adapters/StripeCommerceAdapter.ts` + tests | 5 | 5 | P3-C11 | ⬜ NOT_STARTED |
-| P3-C19 | Create `src/commerce/adapters/X402Adapter.ts` + tests | 5 | 5 | P3-C11 | ⬜ NOT_STARTED |
-| P3-C20 | Create `src/commerce/adapters/CoinbaseWalletAdapter.ts` + tests | 5 | 5 | P3-C11 | ⬜ NOT_STARTED |
-| P3-C21 | Create `src/commerce/adapters/McpPayAdapter.ts` + tests | 5 | 5 | P3-C11 | ⬜ NOT_STARTED |
-| P3-C22 | Create `src/commerce/adapters/AP2MandateAdapter.ts` + tests | 5 | 5 | P3-C11, P3-C5 | ⬜ NOT_STARTED |
-| P3-C23 | Create `src/commerce/wallets/WalletPolicyEngine.ts` + tests | 6 | 6 | P3-C1, P3-C5 | ⬜ NOT_STARTED |
-| P3-C24 | Create `src/commerce/wallets/WalletBindingService.ts` + tests | 6 | 6 | P3-C23, P3-C3 | ⬜ NOT_STARTED |
-| P3-C25 | Create `src/commerce/treasury/TreasuryService.ts` + tests | 6 | 6 | P3-C23, P3-C17 | ⬜ NOT_STARTED |
-| P3-C26 | Create `src/commerce/treasury/TreasuryLedger.ts` + tests | 6 | 6 | P3-C25 | ⬜ NOT_STARTED |
-| P3-C27 | Create `src/gateway/AgentGradeApiGateway.ts` + tests | 8 | 8 | P3-C6, P3-C7 | ⬜ NOT_STARTED |
-| P3-C28 | Create `src/gateway/PaymentChallengeMiddleware.ts` + tests | 8 | 8 | P3-C17, P3-C27 | ⬜ NOT_STARTED |
-| P3-C29 | Create `src/gateway/InboundTrustMiddleware.ts` + tests | 8 | 8 | P3-C6, P3-C27 | ⬜ NOT_STARTED |
-| P3-C30 | Create `src/gateway/CounterpartyRateLimiter.ts` + tests | 8 | 8 | P3-C7, P3-C27 | ⬜ NOT_STARTED |
+| P3-C10 | Create `src/trust/RevocationService.ts` + tests | 2 | 2 | P3-C3, P3-C5, P3-C9 | ✅ PASS |
+| P3-C11 | Create `src/commerce/ICommerceOrchestrator.ts` + `ICommerceRailAdapter.ts` | 4 | 4 | P3-C1 | ✅ PASS |
+| P3-C12 | Create `src/commerce/QuoteService.ts` + tests | 4 | 4 | P3-C11 | ✅ PASS |
+| P3-C13 | Create `src/commerce/ReceiptService.ts` + tests | 4 | 4 | P3-C11 | ✅ PASS |
+| P3-C14 | Create `src/commerce/DisputeService.ts` + tests | 4 | 4 | P3-C13 | ✅ PASS |
+| P3-C15 | Create `src/commerce/RefundPolicyEngine.ts` + tests | 4 | 4 | P3-C13 | ✅ PASS |
+| P3-C16 | Create `src/commerce/SettlementReconciler.ts` + tests | 4 | 4 | P3-C13 | ✅ PASS |
+| P3-C17 | Create `src/commerce/CommerceOrchestrator.ts` + tests | 4 | 4 | P3-C12, P3-C13, P3-C14, P3-C15, P3-C16 | ✅ PASS |
+| P3-C18 | Create `src/commerce/adapters/StripeCommerceAdapter.ts` + tests | 5 | 5 | P3-C11 | ✅ PASS |
+| P3-C19 | Create `src/commerce/adapters/X402Adapter.ts` + tests | 5 | 5 | P3-C11 | ✅ PASS |
+| P3-C20 | Create `src/commerce/adapters/CoinbaseWalletAdapter.ts` + tests | 5 | 5 | P3-C11 | ✅ PASS |
+| P3-C21 | Create `src/commerce/adapters/McpPayAdapter.ts` + tests | 5 | 5 | P3-C11 | ✅ PASS |
+| P3-C22 | Create `src/commerce/adapters/AP2MandateAdapter.ts` + tests | 5 | 5 | P3-C11, P3-C5 | ✅ PASS |
+| P3-C23 | Create `src/commerce/wallets/WalletPolicyEngine.ts` + tests | 6 | 6 | P3-C1, P3-C5 | ✅ PASS |
+| P3-C24 | Create `src/commerce/wallets/WalletBindingService.ts` + tests | 6 | 6 | P3-C23, P3-C3 | ✅ PASS |
+| P3-C25 | Create `src/commerce/treasury/TreasuryService.ts` + tests | 6 | 6 | P3-C23, P3-C17 | ✅ PASS |
+| P3-C26 | Create `src/commerce/treasury/TreasuryLedger.ts` + tests | 6 | 6 | P3-C25 | ✅ PASS |
+| P3-C27 | Create `src/gateway/AgentGradeApiGateway.ts` + tests | 8 | 8 | P3-C6, P3-C7 | ✅ PASS |
+| P3-C28 | Create `src/gateway/PaymentChallengeMiddleware.ts` + tests | 8 | 8 | P3-C17, P3-C27 | ✅ PASS |
+| P3-C29 | Create `src/gateway/InboundTrustMiddleware.ts` + tests | 8 | 8 | P3-C6, P3-C27 | ✅ PASS |
+| P3-C30 | Create `src/gateway/CounterpartyRateLimiter.ts` + tests | 8 | 8 | P3-C7, P3-C27 | ✅ PASS |
 
 ---
 

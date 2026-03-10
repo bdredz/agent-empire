@@ -386,3 +386,32 @@ constructor(
 - **CRITICAL - Merge Conflict Protocol**: Before resolving ANY merge conflict, ensure no other agents (CODEX, OPUS, GEMINI) are actively working.
 - Only merge to `main` what comes from YOUR specific branch.
 - Resolving merge conflicts on shared files while other agents are actively coding causes major workflow issues, as they will start writing to the wrong branch. Do not resolve conflicts on shared files (like `types.ts`) without explicit coordination if other agents are active.
+
+## 2026-03-10 — Phase 3 Trust Plane: Reputation + Revocation
+### What changed
+- Added `AgentReputationService` with event-based trust scoring/reporting and deterministic tests (`src/trust/AgentReputationService.ts`, `src/trust/AgentReputationService.test.ts`).
+- Added `RevocationService` + `RevocationSupport` to implement tenant-safe agent/mandate/counterparty revocation and wallet freeze flows with audit + `SystemEvent` emission (`src/trust/RevocationService.ts`, `src/trust/RevocationSupport.ts`, `src/trust/RevocationService.test.ts`).
+- Updated `CODEX-ASSIGNMENT.md` statuses: `P3-C8` and `P3-C10` marked `PASS`.
+
+### Decisions
+- Architecture map: `AgentIdentityService` + `MandateService` + `CounterpartyRegistry` -> `RevocationService` -> `TrustAuditLog` + `EventEmitter(SystemEvent)`.
+- Kept revocation side effects idempotent (`already revoked/blocked/frozen` returns no-op behavior) to make retry paths safe.
+
+### Gotchas
+- `IssueAgentIdentityParams` does not accept direct `agentId`; tests must create identities through `ownerId` and use returned branded IDs.
+
+## 2026-03-10 — Phase 3 Commerce + Gateway Buildout
+
+### What changed
+- Completed Phase 3 commerce contracts/core execution path through `P3-C17` and finished Wave 5 (`P3-C18`–`P3-C22`) with stubbed rail adapters: Stripe, x402, Coinbase Wallet, MCP Pay, and AP2 mandate adapter.
+- Completed Wave 6 (`P3-C23`–`P3-C26`) with `WalletPolicyEngine`, `WalletBindingService`, `TreasuryLedger`, and `TreasuryService` (append-only treasury journaling + wallet policy enforcement).
+- Completed Wave 8 (`P3-C27`–`P3-C30`) with `AgentGradeApiGateway`, `InboundTrustMiddleware`, `CounterpartyRateLimiter`, and `PaymentChallengeMiddleware`, plus full test coverage for each module.
+
+### Decisions
+- Kept Phase 3 adapters deterministic and in-memory by design (contract-faithful stubs only; no external provider calls), matching Phase 3 guardrails.
+- Split treasury helpers into `TreasuryServiceSupport.ts` to maintain file-size constraints and keep service orchestration logic bounded.
+- Architecture map: `AgentGradeApiGateway -> InboundTrustMiddleware -> CounterpartyRateLimiter -> PaymentChallengeMiddleware -> RouteHandler`; `CommerceOrchestrator -> RailAdapters -> ReceiptService/DisputeService/SettlementReconciler`; `WalletPolicyEngine -> TreasuryService -> TreasuryLedger`.
+
+### Gotchas
+- Full-suite runs can occasionally show a transient `TelemetryMinion` anomaly test failure; isolated rerun passed and subsequent full-suite rerun passed.
+- `TrustAuditEntry.eventType` lacks a wallet-unbound-specific variant, so wallet unbind audit records use `verification_override` with explicit `action: wallet_unbound` details.
