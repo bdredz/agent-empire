@@ -324,3 +324,12 @@ constructor(
 
 ### Gotchas
 - `IBudgetGovernor` does not naturally emit events under the `EventEmitter` model out-of-the-box in the same way `SystemEvent` works inside the minion; the minion relies on injected global emitter for `CircuitBreakerTripped`.
+
+## 2026-03-10 — Merge Conflict Protocol Update
+### What changed
+- Updated git merge conflict resolution rules based on user feedback.
+
+### Gotchas
+- **CRITICAL - Merge Conflict Protocol**: Before resolving ANY merge conflict, ensure no other agents (CODEX, OPUS, GEMINI) are actively working.
+- Only merge to `main` what comes from YOUR specific branch.
+- Resolving merge conflicts on shared files while other agents are actively coding causes major workflow issues, as they will start writing to the wrong branch. Do not resolve conflicts on shared files (like `types.ts`) without explicit coordination if other agents are active.
