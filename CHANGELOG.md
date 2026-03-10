@@ -378,3 +378,14 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 **Files modified:** 2 (src/dashboard/components/EventFeed.tsx, src/dashboard/components/BudgetVisualization.tsx)
 **Tests:** 333/333
 **Notes:** Implemented standalone components for Phase 15 and 17. Finalized P2-G1, P2-G3, P2-G6, P2-G7 after CODEX unblocked P2-C5. Dashboards now plot token burn spikes, budget warnings, and escalated evaluations with distinct emphasis and visualizations.
+
+---
+
+### [2026-03-10] [GEMINI] — Phase 3: Evidence Plane (Wave 3)
+**Branch:** agent/gemini/phase-3-evidence-discovery
+**Status:** PASS
+**Interfaces consumed:** EvidenceRecord, AtomicClaim, ResearchReport, Citation, BibliographyEntry, MemoryProposal, MemoryKind
+**Interfaces produced:** IResearchBroker, SourcePolicyEngine, EvidenceStore, ClaimExtractor, FreshnessScorer, CitationCompiler, ResearchReportBuilder, ResearchBroker
+**Files created:** 16 (8 src files + 8 test files)
+**Tests:** 54/54 on Evidence Plane
+**Notes:** Completed Wave 3. Created full deterministic evidence pipeline without LLMs. SourcePolicyEngine handles tier assignments. EvidenceStore handles content hashing and deduplication. ClaimExtractor runs syntactical claim splitting and heuristic confidence scoring. FreshnessScorer applies tier-based exponential decay. CitationCompiler outputs Markdown bibliography and embedded tags. ResearchReportBuilder identifies gaps. ResearchBroker orchestrates the pipeline and emits MemoryProposals without direct Librarian writes. Type `research_facts` added to MemoryKind.

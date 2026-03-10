@@ -655,6 +655,7 @@ export type MemoryKind =
   | 'policy_record'
   | 'incident_record'
   | 'deprecated_knowledge'
+  | 'research_facts'
 
 export interface MemoryProposal {
   proposalId: string
