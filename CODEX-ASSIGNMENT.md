@@ -358,7 +358,7 @@ CODEX owns the majority of Phase 3: contract freeze, Trust Plane, Commerce Plane
 | P3-C11 | Create `src/commerce/ICommerceOrchestrator.ts` + `ICommerceRailAdapter.ts` | 4 | 4 | P3-C1 | ✅ PASS |
 | P3-C12 | Create `src/commerce/QuoteService.ts` + tests | 4 | 4 | P3-C11 | ✅ PASS |
 | P3-C13 | Create `src/commerce/ReceiptService.ts` + tests | 4 | 4 | P3-C11 | ✅ PASS |
-| P3-C14 | Create `src/commerce/DisputeService.ts` + tests | 4 | 4 | P3-C13 | ⬜ NOT_STARTED |
+| P3-C14 | Create `src/commerce/DisputeService.ts` + tests | 4 | 4 | P3-C13 | ✅ PASS |
 | P3-C15 | Create `src/commerce/RefundPolicyEngine.ts` + tests | 4 | 4 | P3-C13 | ⬜ NOT_STARTED |
 | P3-C16 | Create `src/commerce/SettlementReconciler.ts` + tests | 4 | 4 | P3-C13 | ⬜ NOT_STARTED |
 | P3-C17 | Create `src/commerce/CommerceOrchestrator.ts` + tests | 4 | 4 | P3-C12, P3-C13, P3-C14, P3-C15, P3-C16 | ⬜ NOT_STARTED |
