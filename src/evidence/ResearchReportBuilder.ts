@@ -1,4 +1,6 @@
-import type { AtomicClaim, EvidenceRecord, ResearchReport } from './types.js'
+import { randomUUID } from 'crypto'
+import type { AtomicClaim, EvidenceRecord, ResearchReport } from '@shared/types.js'
+import { createReportId, createEvidenceId } from '@shared/types.js'
 import type { CitationBundle } from './CitationCompiler.js'
 
 export interface ReportBuilderInput {
@@ -13,6 +15,8 @@ export class ResearchReportBuilder {
     build(input: ReportBuilderInput): ResearchReport {
         if (!input.claims.length || !input.evidence.length) {
             return {
+                reportId: createReportId(randomUUID()),
+                tenantId: input.tenantId,
                 question: input.question,
                 answer: 'Insufficient evidence to answer the question.',
                 claims: [],
@@ -29,7 +33,7 @@ export class ResearchReportBuilder {
         let minDateStr = new Date().toISOString()
 
         for (const ev of input.evidence) {
-            const dateStr = ev.publishedTimestamp || ev.fetchTimestamp
+            const dateStr = ev.publishedAt || ev.fetchedAt
             const ms = new Date(dateStr).getTime()
             if (ms < minDateMs) {
                 minDateMs = ms
@@ -42,13 +46,13 @@ export class ResearchReportBuilder {
             citMap.set(c.claimId, c.inlineText)
         }
 
-        const sortedClaims = [...input.claims].sort((a, b) => b.confidenceScore - a.confidenceScore)
+        const sortedClaims = [...input.claims].sort((a, b) => b.confidence - a.confidence)
         const sentences: string[] = []
 
         for (const claim of sortedClaims) {
             const inline = citMap.get(claim.claimId) || ''
             sentences.push(`${claim.statement} ${inline}`.trim())
-            avgConfidence += claim.confidenceScore
+            avgConfidence += claim.confidence
         }
         avgConfidence = Number((avgConfidence / sortedClaims.length).toFixed(3))
 
@@ -71,10 +75,12 @@ export class ResearchReportBuilder {
             : answerBody
 
         return {
+            reportId: createReportId(randomUUID()),
+            tenantId: input.tenantId,
             question: input.question,
             answer,
             claims: sortedClaims,
-            evidenceIds: Array.from(new Set(input.evidence.map((e) => e.evidenceId))),
+            evidenceIds: Array.from(new Set(input.evidence.map((e) => createEvidenceId(e.evidenceId)))),
             freshnessDate: minDateStr,
             confidence: avgConfidence,
             gaps,

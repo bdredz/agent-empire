@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'crypto'
-import type { EvidenceRecord } from './types.js'
+import type { EvidenceRecord } from '@shared/types.js'
+import { createEvidenceId } from '@shared/types.js'
 
 export class EvidenceStore {
     private memoryMap = new Map<string, EvidenceRecord>()
@@ -27,7 +28,7 @@ export class EvidenceStore {
             }
         }
 
-        const evidenceId = randomUUID()
+        const evidenceId = createEvidenceId(randomUUID())
         const newRecord: EvidenceRecord = {
             ...params,
             evidenceId,

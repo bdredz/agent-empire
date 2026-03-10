@@ -126,8 +126,8 @@ describe('ResearchBroker', () => {
                 budgetTokens: 5 // arbitrarily low budget
             })
             // expect to throw or truncate... assuming throw for now until I implement it
-        } catch (e: any) {
-            expect(e.message).toContain('Budget')
+        } catch (e: unknown) {
+            expect((e as Error).message).toContain('Budget')
         }
     })
 })

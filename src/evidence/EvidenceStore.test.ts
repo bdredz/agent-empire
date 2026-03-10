@@ -12,8 +12,10 @@ describe('EvidenceStore', () => {
     it('stores evidence with rawContent and computes SHA-256 hash', async () => {
         const record = await store.storeEvidence({
             tenantId: 'tenant-1',
+            questionId: 'q-default',
             sourceUrl: 'https://example.com/doc',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.9,
             freshnessScore: 1.0,
             rawContent: 'Sample document content'
@@ -27,8 +29,10 @@ describe('EvidenceStore', () => {
     it('retrieves evidence by ID with tenant isolation', async () => {
         const record = await store.storeEvidence({
             tenantId: 'tenant-1',
+            questionId: 'q-default',
             sourceUrl: 'https://example.com/doc',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.9,
             freshnessScore: 1.0,
             rawContent: 'Content 1'
@@ -47,7 +51,8 @@ describe('EvidenceStore', () => {
             tenantId: 'tenant-1',
             questionId: 'q-1',
             sourceUrl: 'https://example.com/docs/1',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.9,
             freshnessScore: 1.0,
             rawContent: 'Content Q1-A'
@@ -57,7 +62,8 @@ describe('EvidenceStore', () => {
             tenantId: 'tenant-1',
             questionId: 'q-1',
             sourceUrl: 'https://example.com/docs/2',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.8,
             freshnessScore: 0.9,
             rawContent: 'Content Q1-B'
@@ -67,7 +73,8 @@ describe('EvidenceStore', () => {
             tenantId: 'tenant-1',
             questionId: 'q-2',
             sourceUrl: 'https://example.com/docs/3',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.5,
             freshnessScore: 0.4,
             rawContent: 'Content Q2'
@@ -81,8 +88,10 @@ describe('EvidenceStore', () => {
     it('deduplicates by exact content hash and source url', async () => {
         const first = await store.storeEvidence({
             tenantId: 'tenant-1',
+            questionId: 'q-default',
             sourceUrl: 'https://example.com/dup',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.9,
             freshnessScore: 1.0,
             rawContent: 'Same strict content'
@@ -90,8 +99,10 @@ describe('EvidenceStore', () => {
 
         const second = await store.storeEvidence({
             tenantId: 'tenant-1',
+            questionId: 'q-default',
             sourceUrl: 'https://example.com/dup',
-            fetchTimestamp: '2026-03-02T12:00:00Z', // fetched later
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-02T12:00:00Z', // fetched later
             trustScore: 0.9,
             freshnessScore: 0.9,
             rawContent: 'Same strict content'
@@ -103,8 +114,10 @@ describe('EvidenceStore', () => {
     it('preserves freshness score assignment strictly', async () => {
         const record = await store.storeEvidence({
             tenantId: 'tenant-1',
+            questionId: 'q-default',
             sourceUrl: 'https://example.com/doc',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.9,
             freshnessScore: 0.73,
             contentHash: 'some-hash'
@@ -116,8 +129,10 @@ describe('EvidenceStore', () => {
     it('preserves trust score from source tier strictly', async () => {
         const record = await store.storeEvidence({
             tenantId: 'tenant-1',
+            questionId: 'q-default',
             sourceUrl: 'https://example.com/doc',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.88,
             freshnessScore: 0.9,
             contentHash: 'some-hash2'
@@ -129,8 +144,10 @@ describe('EvidenceStore', () => {
     it('lists evidence by source URL', async () => {
         await store.storeEvidence({
             tenantId: 'tenant-X',
+            questionId: 'q-default',
             sourceUrl: 'https://mysite.com/article',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 0.8,
             freshnessScore: 0.5,
             contentHash: 'hash-a'
@@ -138,8 +155,10 @@ describe('EvidenceStore', () => {
 
         await store.storeEvidence({
             tenantId: 'tenant-X',
+            questionId: 'q-default',
             sourceUrl: 'https://mysite.com/article',
-            fetchTimestamp: '2026-03-02T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-02T12:00:00Z',
             trustScore: 0.8,
             freshnessScore: 0.8,
             contentHash: 'hash-b' // changed content doesn't dedup
@@ -154,7 +173,8 @@ describe('EvidenceStore', () => {
             tenantId: 'tenant-A',
             questionId: 'q-iso',
             sourceUrl: 'https://mysite.com/iso',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 1.0,
             freshnessScore: 1.0,
             contentHash: 'iso-hash'
@@ -171,7 +191,8 @@ describe('EvidenceStore', () => {
             tenantId: 'tenant-B',
             questionId: 'q-iso',
             sourceUrl: 'https://mysite.com/iso',
-            fetchTimestamp: '2026-03-01T12:00:00Z',
+            sourceType: 'webpage',
+            fetchedAt: '2026-03-01T12:00:00Z',
             trustScore: 1.0,
             freshnessScore: 1.0,
             contentHash: 'iso-hash'

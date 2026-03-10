@@ -6,7 +6,7 @@ import type { ClaimExtractor } from './ClaimExtractor.js'
 import type { FreshnessScorer } from './FreshnessScorer.js'
 import type { CitationCompiler } from './CitationCompiler.js'
 import type { ResearchReportBuilder } from './ResearchReportBuilder.js'
-import type { EvidenceRecord, ResearchReport } from './types.js'
+import type { EvidenceRecord, ResearchReport } from '@shared/types.js'
 import type { MemoryProposal } from '@shared/types.js'
 
 export class ResearchBroker implements IResearchBroker {
@@ -76,7 +76,8 @@ export class ResearchBroker implements IResearchBroker {
                 questionId,
                 tenantId: params.tenantId,
                 sourceUrl: source.url,
-                fetchTimestamp: nowTimestamp,
+                sourceType: 'webpage',
+                fetchedAt: nowTimestamp,
                 trustScore: source.tier === 'tier_1' ? 1.0 : (source.tier === 'tier_2' ? 0.8 : 0.5),
                 freshnessScore: freshness.freshnessScore,
                 rawContent: dummyContent

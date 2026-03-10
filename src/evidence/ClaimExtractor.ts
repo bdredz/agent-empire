@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto'
-import type { AtomicClaim } from './types.js'
+import type { AtomicClaim } from '@shared/types.js'
+import { createClaimId, createEvidenceId } from '@shared/types.js'
 
 export class ClaimExtractor {
     extractClaims(evidenceId: string, rawContent: string): AtomicClaim[] {
@@ -66,10 +67,11 @@ export class ClaimExtractor {
             if (score > 1.0) score = 1.0
 
             claims.push({
-                claimId: randomUUID(),
-                evidenceId,
+                claimId: createClaimId(randomUUID()),
+                evidenceId: createEvidenceId(evidenceId),
                 statement: sentence,
-                confidenceScore: Number(score.toFixed(2))
+                confidence: Number(score.toFixed(2)),
+                extractedAt: new Date().toISOString()
             })
         }
 

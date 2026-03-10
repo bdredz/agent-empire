@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import type { AtomicClaim, EvidenceRecord, Citation, BibliographyEntry } from './types.js'
+import type { AtomicClaim, EvidenceRecord, Citation, BibliographyEntry } from '@shared/types.js'
 
 export interface CitationBundle {
     citations: Citation[]
@@ -39,7 +39,7 @@ export class CitationCompiler {
                     bibliographyId: `bib-${randomUUID().substring(0, 8)}`,
                     sourceUrl: ev.sourceUrl,
                     title,
-                    publishedTimestamp: ev.publishedTimestamp
+                    publishedAt: ev.publishedAt
                 }
                 bibMap.set(ev.sourceUrl, bibEntry)
                 bibliography.push(bibEntry)
@@ -68,7 +68,7 @@ export class CitationCompiler {
         let markdown = '### Bibliography\n\n'
         for (let i = 0; i < bibliography.length; i++) {
             const bRef = bibliography[i] as BibliographyEntry
-            const dateStr = bRef.publishedTimestamp ? ` (${bRef.publishedTimestamp})` : ''
+            const dateStr = bRef.publishedAt ? ` (${bRef.publishedAt})` : ''
             markdown += `[${i + 1}] ${bRef.title}${dateStr} - ${bRef.sourceUrl}\n`
         }
 

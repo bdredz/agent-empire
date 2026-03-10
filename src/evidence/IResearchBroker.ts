@@ -1,4 +1,4 @@
-import type { ResearchReport, EvidenceRecord } from './types.js'
+import type { ResearchReport, EvidenceRecord } from '@shared/types.js'
 
 export interface IResearchBroker {
     research(params: {

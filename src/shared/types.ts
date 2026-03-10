@@ -836,6 +836,20 @@ export interface EvidenceRecord {
   contentHash: string
   trustScore: number
   freshnessScore: number
+  rawContent?: string
+}
+
+export interface Citation {
+  claimId: ClaimId
+  bibliographyId: string
+  inlineText: string
+}
+
+export interface BibliographyEntry {
+  bibliographyId: string
+  sourceUrl: string
+  title?: string
+  publishedAt?: string
 }
 
 export interface AtomicClaim {

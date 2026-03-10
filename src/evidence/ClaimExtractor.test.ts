@@ -21,16 +21,16 @@ describe('ClaimExtractor', () => {
     it('assigns confidence scoring properly based on heuristics', () => {
         // base score (0.7)
         const base = extractor.extractClaims('ev-1', 'The sky is blue.')[0]
-        expect(base!.confidenceScore).toBeCloseTo(0.7)
+        expect(base!.confidence).toBeCloseTo(0.7)
 
         // number boost (+0.15)
         const numberBoost = extractor.extractClaims('ev-1', 'There are 8 planets in our solar system.')[0]
-        expect(numberBoost!.confidenceScore).toBeCloseTo(0.85)
+        expect(numberBoost!.confidence).toBeCloseTo(0.85)
 
         // citation boost (+0.15)
         // according to adds 0.15, numbers 0.15 -> 1.0
         const citBoost = extractor.extractClaims('ev-1', 'According to NASA, there are 8 planets.')[0]
-        expect(citBoost!.confidenceScore).toBeCloseTo(1.0)
+        expect(citBoost!.confidence).toBeCloseTo(1.0)
     })
 
     it('filters out questions', () => {
@@ -71,5 +71,15 @@ describe('ClaimExtractor', () => {
         expect(claims.every(c => c.evidenceId === 'ev-unique')).toBe(true)
         const ids = new Set(claims.map(c => c.claimId))
         expect(ids.size).toBe(3) // claim IDs should be distinct
+    })
+
+    it('sets extractedAt timestamp on every claim', () => {
+        const before = new Date().toISOString()
+        const claims = extractor.extractClaims('ev-1', 'The Earth revolves around the Sun.')
+        const after = new Date().toISOString()
+        expect(claims.length).toBeGreaterThan(0)
+        expect(claims[0]!.extractedAt).toBeDefined()
+        expect(claims[0]!.extractedAt >= before).toBe(true)
+        expect(claims[0]!.extractedAt <= after).toBe(true)
     })
 })
