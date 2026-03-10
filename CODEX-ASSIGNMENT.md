@@ -348,7 +348,7 @@ CODEX owns the majority of Phase 3: contract freeze, Trust Plane, Commerce Plane
 | P3-C1 | Freeze Phase 3 contracts in `src/shared/types.ts` | 1 | 1 | None | ✅ PASS |
 | P3-C2 | Create `src/trust/IAgentIdentityService.ts` | 2 | 2 | P3-C1 | ✅ PASS |
 | P3-C3 | Create `src/trust/AgentIdentityService.ts` + tests | 2 | 2 | P3-C2 | ⬜ NOT_STARTED |
-| P3-C4 | Create `src/trust/IMandateService.ts` | 2 | 2 | P3-C1 | ⬜ NOT_STARTED |
+| P3-C4 | Create `src/trust/IMandateService.ts` | 2 | 2 | P3-C1 | ✅ PASS |
 | P3-C5 | Create `src/trust/MandateService.ts` + tests | 2 | 2 | P3-C4 | ⬜ NOT_STARTED |
 | P3-C6 | Create `src/trust/VerificationPolicyEngine.ts` + tests | 2 | 2 | P3-C2, P3-C4 | ⬜ NOT_STARTED |
 | P3-C7 | Create `src/trust/CounterpartyRegistry.ts` + tests | 2 | 2 | P3-C1 | ⬜ NOT_STARTED |
