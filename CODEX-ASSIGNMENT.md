@@ -371,10 +371,10 @@ CODEX owns the majority of Phase 3: contract freeze, Trust Plane, Commerce Plane
 | P3-C24 | Create `src/commerce/wallets/WalletBindingService.ts` + tests | 6 | 6 | P3-C23, P3-C3 | ✅ PASS |
 | P3-C25 | Create `src/commerce/treasury/TreasuryService.ts` + tests | 6 | 6 | P3-C23, P3-C17 | ✅ PASS |
 | P3-C26 | Create `src/commerce/treasury/TreasuryLedger.ts` + tests | 6 | 6 | P3-C25 | ✅ PASS |
-| P3-C27 | Create `src/gateway/AgentGradeApiGateway.ts` + tests | 8 | 8 | P3-C6, P3-C7 | ⬜ NOT_STARTED |
-| P3-C28 | Create `src/gateway/PaymentChallengeMiddleware.ts` + tests | 8 | 8 | P3-C17, P3-C27 | ⬜ NOT_STARTED |
-| P3-C29 | Create `src/gateway/InboundTrustMiddleware.ts` + tests | 8 | 8 | P3-C6, P3-C27 | ⬜ NOT_STARTED |
-| P3-C30 | Create `src/gateway/CounterpartyRateLimiter.ts` + tests | 8 | 8 | P3-C7, P3-C27 | ⬜ NOT_STARTED |
+| P3-C27 | Create `src/gateway/AgentGradeApiGateway.ts` + tests | 8 | 8 | P3-C6, P3-C7 | ✅ PASS |
+| P3-C28 | Create `src/gateway/PaymentChallengeMiddleware.ts` + tests | 8 | 8 | P3-C17, P3-C27 | ✅ PASS |
+| P3-C29 | Create `src/gateway/InboundTrustMiddleware.ts` + tests | 8 | 8 | P3-C6, P3-C27 | ✅ PASS |
+| P3-C30 | Create `src/gateway/CounterpartyRateLimiter.ts` + tests | 8 | 8 | P3-C7, P3-C27 | ✅ PASS |
 
 ---
 
