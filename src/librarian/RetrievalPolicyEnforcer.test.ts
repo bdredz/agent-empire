@@ -142,4 +142,44 @@ describe('RetrievalPolicyEnforcer', () => {
     expect(() => enforcer.enforce([makeEntry()], makePolicy({ tenantId: '' })))
       .toThrow('Retrieval policy requires tenantId')
   })
+
+  it('filters by minFreshnessScore', () => {
+    const enforcer = new RetrievalPolicyEnforcer()
+    const result = enforcer.enforce(
+      [
+        makeEntry({ entryId: 'fresh', freshnessScore: 0.9 }),
+        makeEntry({ entryId: 'stale', freshnessScore: 0.3 }),
+      ],
+      makePolicy({ minFreshnessScore: 0.5 }),
+    )
+
+    expect(result.map((entry) => entry.entryId)).toEqual(['fresh'])
+  })
+
+  it('filters by minTrustScore', () => {
+    const enforcer = new RetrievalPolicyEnforcer()
+    const result = enforcer.enforce(
+      [
+        makeEntry({ entryId: 'trusted', trustScore: 0.8 }),
+        makeEntry({ entryId: 'untrusted', trustScore: 0.2 }),
+      ],
+      makePolicy({ minTrustScore: 0.5 }),
+    )
+
+    expect(result.map((entry) => entry.entryId)).toEqual(['trusted'])
+  })
+
+  it('filters by requireProvenance', () => {
+    const enforcer = new RetrievalPolicyEnforcer()
+    const result = enforcer.enforce(
+      [
+        makeEntry({ entryId: 'provenance', provenanceArtifacts: ['artifact-1'] }),
+        makeEntry({ entryId: 'no-provenance', provenanceArtifacts: [] }),
+        makeEntry({ entryId: 'no-field' }),
+      ],
+      makePolicy({ requireProvenance: true }),
+    )
+
+    expect(result.map((entry) => entry.entryId)).toEqual(['provenance'])
+  })
 })

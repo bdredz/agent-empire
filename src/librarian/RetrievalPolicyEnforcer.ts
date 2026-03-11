@@ -11,6 +11,12 @@ export class RetrievalPolicyEnforcer {
       .filter((entry) => policy.includeGlobalArchitecture || entry.visibility !== 'global_architecture')
       .filter((entry) => policy.allowedKinds.includes(entry.kind))
       .filter((entry) => this.matchesBusinessUnit(entry, policy.businessUnitId))
+      .filter((entry) => {
+        if (policy.minFreshnessScore !== undefined && entry.freshnessScore < policy.minFreshnessScore) return false
+        if (policy.minTrustScore !== undefined && entry.trustScore < policy.minTrustScore) return false
+        if (policy.requireProvenance && (!entry.provenanceArtifacts || entry.provenanceArtifacts.length === 0)) return false
+        return true
+      })
 
     return this.applyLimits(scoped, policy.maxFacts, policy.maxTokens)
   }
