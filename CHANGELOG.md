@@ -51,7 +51,7 @@ PHASE 3: TRUSTED EXTERNAL OPERATIONS  [PLANNED]     depends: 12-18       owner: 
   Wave 7: Discovery Plane (4 services)[PASS]        owner: GEMINI
   Wave 7b: Hive Mind V2 + Dashboard   [PLANNED]     owner: GEMINI
   Wave 8: Gateway Hardening (4 svcs)  [PASS]        owner: CODEX
-  Wave 9: Integration & Chaos         [IN_PROGRESS] owner: OPUS (O8/O10 done, O11/O12 pending)
+  Wave 9: Integration & Chaos         [PASS]        owner: OPUS
 PHASE 13: MEMORY SPINE & TENANCY      [PASS]        depends: 12,6        owner: CODEX
 PHASE 14: DURABILITY & CHECKPOINTING  [PASS]        depends: 12          owner: CODEX
 PHASE 15: TELEMETRY & AUDIT MINIONS   [PASS]        depends: 12,2,3      owner: CODEX+GEMINI
@@ -63,6 +63,17 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 ---
 
 ## Log
+
+### [2026-03-11] [OPUS] — Phase 3: P3-O11/O12 Cross-Plane + Chaos Protocol Tests
+**Branch:** main
+**Status:** PASS
+**Interfaces consumed:** All Trust Plane (7 services), Commerce Plane (7 services + WalletPolicyEngine), Evidence Plane (7 services), RevocationService
+**Interfaces produced:** None (test-only)
+**Files created:** 2 (src/integration/crossPlane.test.ts, src/integration/chaosProtocol.test.ts)
+**Tests:** 726/726 (90 files)
+**Notes:** P3-O11 cross-plane tests verify trust↔commerce mandate gates, agent revocation blocking commerce, counterparty blocking, wallet freeze, evidence confidence threshold, and full end-to-end lifecycle. P3-O12 chaos protocol tests cover revocation cascade under load (5 agents × 2 mandates × 1 wallet), wallet freeze mid-transaction, evidence freshness failure + budget exhaustion, rail adapter failure propagation (authorize + capture), counterparty block mid-flow with transition validation, and mandate expiry/consumed during authorization. All Wave 9 OPUS tasks complete (O2-O12). Phase 3 Wave 9 PASS.
+
+---
 
 ### [2026-03-10] [OPUS] — Phase 3: P3-O2/O4/O5/O6/O8/O10 Full Plane Wiring + Integration Tests
 **Branch:** main (merged from claude/hopeful-euler worktree)

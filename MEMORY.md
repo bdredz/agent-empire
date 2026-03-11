@@ -1,5 +1,47 @@
 # Agent Empire: Project Memory
 
+## 2026-03-11 — OPUS Phase 3: P3-O11/O12 (Cross-Plane + Chaos Protocol — Wave 9 COMPLETE)
+
+### What changed
+- **P3-O11**: Created `src/integration/crossPlane.test.ts` — 6 cross-plane integration tests:
+  - Trust→Commerce mandate gate (revoked mandate blocks authorize)
+  - Trust→Commerce agent revocation blocks commerce
+  - Commerce→Trust counterparty blocking halts new quotes
+  - Trust→Commerce wallet freeze blocks WalletPolicyEngine evaluation
+  - Evidence→Commerce confidence below threshold blocks proposal sink
+  - Full end-to-end: identity→mandate→quote→authorize→capture→reconcile→revoke
+- **P3-O12**: Created `src/integration/chaosProtocol.test.ts` — 9 chaos protocol tests:
+  - Revocation cascade under load (5 agents × 2 mandates × 1 wallet)
+  - Wallet freeze mid-transaction
+  - Evidence freshness failure + budget exhaustion
+  - Rail adapter failure propagation (authorize + capture)
+  - Counterparty block mid-flow with transition validation
+  - Mandate expiry/consumed during authorization (2 sub-tests)
+- Total: 726/726 tests pass across 90 files, typecheck clean
+- ALL Wave 9 OPUS tasks COMPLETE (O2-O12)
+
+### API corrections discovered
+- `WalletPolicyEngine` constructor: `{ now?: () => Date }` (NOT `{ defaultTenantId }`)
+- `WalletPolicyEngine` methods: `.upsertPolicy(WalletPolicy)` and `.evaluate(walletId, transaction)` → returns decision object (NOT `.registerPolicy()` / `.evaluateTransaction()`)
+- `QuoteService` DOES gate on blocked counterparty status (throws 'Counterparty is blocked')
+- Expired/consumed mandates cause 'Payment action denied: active_mandate_required' (not 'Mandate invalid') because VerificationPolicyEngine checks mandate first
+
+### All OPUS Phase 3 tasks COMPLETE
+| Task | Description | Status |
+|------|-------------|--------|
+| P3-O1 | Contract freeze review | PASS |
+| P3-O2 | Trust Plane DI wiring | PASS |
+| P3-O3 | Evidence Plane DI wiring | PASS |
+| P3-O4 | Commerce Plane DI wiring | PASS |
+| P3-O5 | Discovery Plane DI wiring | PASS |
+| P3-O6 | Gateway DI wiring | PASS |
+| P3-O7 | Config fields for Phase 3 | PASS |
+| P3-O8 | Trust Plane integration tests | PASS |
+| P3-O9 | Evidence Plane integration tests | PASS |
+| P3-O10 | Commerce Plane integration tests | PASS |
+| P3-O11 | Cross-plane integration tests | PASS |
+| P3-O12 | Chaos protocol tests | PASS |
+
 ## 2026-03-10 — OPUS Phase 3: P3-O2/O4/O5/O6/O8/O10 (All Planes Wired + Integration Tests)
 
 ### What changed
@@ -12,10 +54,6 @@
 - **P3-O8**: Created `src/integration/trustPlane.test.ts` — 7 integration tests (identity lifecycle, mandate lifecycle, trust level enforcement L0-L3, counterparty registration/blocking, reputation tracking, cascading revocation, audit trail completeness)
 - **P3-O10**: Created `src/integration/commercePlane.test.ts` — 12 integration tests (quote creation, authorize→capture flow, mandate rejection, trust level gate, auto-refund, manual review threshold, refund policy engine, receipt tracking, settlement reconciliation, settlement mismatch, dispute flow, dispute rejection on refunded receipt)
 - Total: 711/711 tests pass across 88 files, typecheck clean
-
-### Remaining OPUS tasks
-- **P3-O11**: Cross-plane integration tests (trust→commerce mandate check)
-- **P3-O12**: Chaos protocol tests (revocation cascade, wallet freeze, evidence freshness failure, rail failure, counterparty block mid-flow, mandate expiry during auth)
 
 ## 2026-03-10 — OPUS Phase 3: P3-O1, P3-O3, P3-O7, P3-O9
 
