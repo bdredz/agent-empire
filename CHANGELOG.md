@@ -423,3 +423,15 @@ PHASE 18: CAPABILITY MANIFESTS        [PASS]        depends: 13,16,9     owner: 
 **Files created:** 8 (4 src files + 4 test files)
 **Tests:** 28/28 on Discovery Plane
 **Notes:** Completed Wave 4 (P3-G9 to P3-G12). Built `InternalServiceRegistry` for robust cataloging of `ExternalCapabilityManifest`s. Implemented `DiscoveryPolicyEngine` handling trust badges and reliability score cut-offs. Created `ExternalManifestPublisher` to cleanly format subset of publishable services into pseudo-JSON. Built idempotent `ProtocolInjectionSwarm` logic to simulate external registry broadcasts.
+
+---
+
+### [2026-03-10] [GEMINI] — Phase 3: Hive Mind V2 & Dashboard Components (Wave 7b)
+**Branch:** agent/gemini/phase-3-evidence-discovery
+**Status:** PASS
+**Interfaces consumed:** MemoryKind, KnowledgeEntryV2, RetrievalPolicy, CapabilityManifest, ExternalCapabilityManifest, ResearchReport, EvidenceRecord, Citation, BibliographyEntry
+**Interfaces produced:** (React components) TrustDashboard, CommerceActivityPanel, EvidenceViewer, DiscoveryPanel
+**Files created:** 4 (src/dashboard/components/*.tsx)
+**Files modified:** 4 (src/shared/types.ts, src/librarian/RetrievalPolicyEnforcer.ts, src/librarian/MemoryProposalPipeline.ts, tests)
+**Tests:** 800+ total passing
+**Notes:** Completed Wave 7b (P3-G13 to P3-G17). Extended Librarian to support new Hive Mind V2 namespaces (`research_facts`, `identity_records`, `commerce_records`, `counterparty_records`, `incident_records`). Added `minFreshnessScore`, `minTrustScore`, and `requireProvenance` filtering to `RetrievalPolicyEnforcer`. Created 4 major dashboard components: `TrustDashboard` (identity and counterparties), `CommerceActivityPanel` (treasury flows and charts), `EvidenceViewer` (reports, claims, gap analysis), and `DiscoveryPanel` (services, capabilities, pseudo-JSON manifest explorer). Typecheck PASS. All tasks assigned to GEMINI are now fully complete.

@@ -426,3 +426,18 @@ constructor(
 ### Gotchas
 - Full-suite runs can occasionally show a transient `TelemetryMinion` anomaly test failure; isolated rerun passed and subsequent full-suite rerun passed.
 - `TrustAuditEntry.eventType` lacks a wallet-unbound-specific variant, so wallet unbind audit records use `verification_override` with explicit `action: wallet_unbound` details.
+
+## 2026-03-10 — Phase 3 Hive Mind V2 & Dashboard Components
+### What changed
+- Extended `MemoryKind` union in `@shared/types` to support Hive Mind V2 namespaces (`research_facts`, `identity_records`, `commerce_records`, `counterparty_records`, `incident_records`).
+- Updated `RetrievalPolicyEnforcer` and `RetrievalPolicy` interface to support scoring filters: `minFreshnessScore`, `minTrustScore`, and `requireProvenance`.
+- Implemented `TrustDashboard.tsx`, `CommerceActivityPanel.tsx`, `EvidenceViewer.tsx`, and `DiscoveryPanel.tsx` React components for the dashboard.
+- Resolved TypeScript `any` and Recharts typing issues to strictly conform to project style guidelines.
+
+### Decisions
+- Recharts `Tooltip` formatter needs explicit optional chaining (`value?: number`) to avoid type mismatch since recharts can occasionally pass `undefined`.
+- Dashboard components are read-only views mirroring the hub-and-spoke isolation model for Agent Empire.
+
+### Gotchas
+- Always calculate aggregate freshness on the fly when the parent report lacks computed aggregations.
+- Recharts `value` property inside `Tooltip` formatters can be undefined despite seemingly typed otherwise.
