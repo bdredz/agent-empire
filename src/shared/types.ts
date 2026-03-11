@@ -656,6 +656,10 @@ export type MemoryKind =
   | 'incident_record'
   | 'deprecated_knowledge'
   | 'research_facts'
+  | 'identity_records'
+  | 'commerce_records'
+  | 'counterparty_records'
+  | 'incident_records'
 
 export interface MemoryProposal {
   proposalId: string
@@ -682,6 +686,7 @@ export interface KnowledgeEntryV2 {
   sourceProposalIds: string[]
   trustScore: number
   freshnessScore: number
+  provenanceArtifacts?: string[]
   supersedesEntryId?: string
   expiresAt?: string
   createdAt: string
@@ -695,6 +700,9 @@ export interface RetrievalPolicy {
   maxFacts: number
   maxTokens: number
   allowedKinds: MemoryKind[]
+  minFreshnessScore?: number
+  minTrustScore?: number
+  requireProvenance?: boolean
 }
 
 export interface WorkflowCheckpoint {

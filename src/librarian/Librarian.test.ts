@@ -383,4 +383,75 @@ describe('Librarian', () => {
     const latest = entries.find((entry) => entry.entryId === second.entryId)
     expect(latest?.supersedesEntryId).toBe(first.entryId)
   })
+
+  it('stores research fact with freshness and provenance', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = '*'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    const result = await librarian.submitProposal({
+      proposalId: 'research-1',
+      tenantId: 'tenant-a',
+      sourceAgentId: 'agent-a',
+      kind: 'research_facts',
+      title: 'Quantum state discovery',
+      rawContent: 'State is superpositional.',
+      summary: 'research note',
+      tags: [],
+      confidence: 0.9,
+      sourceArtifacts: ['artifact-123', 'artifact-456'],
+      createdAt: new Date().toISOString(),
+    })
+
+    expect(result.accepted).toBe(true)
+    const entries = await store.listByTenantV2('tenant-a')
+    const entry = entries.find((e) => e.entryId === result.entryId)
+    expect(entry?.freshnessScore).toBeGreaterThanOrEqual(0.9)
+    expect(entry?.provenanceArtifacts).toEqual(['artifact-123', 'artifact-456'])
+  })
+
+  it('queries by namespace and enforces tenant isolation across namespaces', async () => {
+    process.env.LIBRARIAN_ALLOWED_WRITERS = '*'
+    const store = new InMemoryLibrarianStore()
+    const librarian = new Librarian(store)
+
+    await librarian.submitProposal({
+      proposalId: 'commerce-1',
+      tenantId: 'tenant-a',
+      sourceAgentId: 'agent-1',
+      kind: 'commerce_records',
+      title: 'Ledger entry A',
+      rawContent: 'Transaction success',
+      summary: '',
+      tags: [],
+      confidence: 1.0,
+      createdAt: new Date().toISOString()
+    })
+
+    await librarian.submitProposal({
+      proposalId: 'commerce-2',
+      tenantId: 'tenant-b', // Different tenant
+      sourceAgentId: 'agent-2',
+      kind: 'commerce_records',
+      title: 'Ledger entry B',
+      rawContent: 'Transaction fail',
+      summary: '',
+      tags: [],
+      confidence: 1.0,
+      createdAt: new Date().toISOString()
+    })
+
+    // Query commerce records for tenant-a
+    const result = await librarian.queryV2('', {
+      tenantId: 'tenant-a',
+      includeGlobalArchitecture: false,
+      maxFacts: 10,
+      maxTokens: 100,
+      allowedKinds: ['commerce_records'], // namespace query
+    })
+
+    expect(result).toHaveLength(1)
+    expect(result[0]?.tenantId).toBe('tenant-a')
+    expect(result[0]?.title).toBe('Ledger entry A')
+  })
 })

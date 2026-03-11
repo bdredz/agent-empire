@@ -90,6 +90,7 @@ export class MemoryProposalPipeline {
       sourceProposalIds: [proposal.proposalId],
       trustScore: clamp((proposal.confidence + confidence) / 2, 0, 1),
       freshnessScore: computeFreshnessScore(proposal.createdAt),
+      provenanceArtifacts: proposal.sourceArtifacts,
       supersedesEntryId: superseded?.entryId,
       createdAt: now,
       updatedAt: now,
