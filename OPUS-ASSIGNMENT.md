@@ -227,18 +227,18 @@ OPUS owns: Phase 3 contract review, DI container wiring for all four new planes,
 
 | # | Task | Wave | Seq | Depends On | Status |
 |---|------|------|-----|------------|--------|
-| P3-O1 | Review and validate Phase 3 contracts (pre-freeze) | 1 | 1 | None | ⬜ NOT_STARTED |
-| P3-O2 | Wire Trust Plane into `src/server/container.ts` | 9 | 9 | P3-C10 (Trust Plane complete) | ⬜ NOT_STARTED |
-| P3-O3 | Wire Evidence Plane into `src/server/container.ts` | 9 | 9 | P3-G7 (Evidence Plane complete) | ⬜ NOT_STARTED |
-| P3-O4 | Wire Commerce Plane into `src/server/container.ts` | 9 | 9 | P3-C17, P3-C22 (Commerce + Adapters) | ⬜ NOT_STARTED |
-| P3-O5 | Wire Discovery Plane into `src/server/container.ts` | 9 | 9 | P3-G12 (Discovery Plane complete) | ⬜ NOT_STARTED |
-| P3-O6 | Wire Gateway into server routes | 9 | 9 | P3-C30 (Gateway complete) | ⬜ NOT_STARTED |
-| P3-O7 | Update `src/shared/config.ts` for Phase 3 | 9 | 9 | P3-C1 | ⬜ NOT_STARTED |
-| P3-O8 | Integration test — Trust Plane end-to-end | 9 | 9 | P3-O2 | ⬜ NOT_STARTED |
-| P3-O9 | Integration test — Evidence Plane end-to-end | 9 | 9 | P3-O3 | ⬜ NOT_STARTED |
-| P3-O10 | Integration test — Commerce Plane end-to-end | 9 | 9 | P3-O4 | ⬜ NOT_STARTED |
-| P3-O11 | Integration test — Cross-plane trust→commerce mandate | 9 | 9 | P3-O2, P3-O4 | ⬜ NOT_STARTED |
-| P3-O12 | Controlled chaos protocol tests | 9 | 9 | P3-O8 thru P3-O11 | ⬜ NOT_STARTED |
+| P3-O1 | Review and validate Phase 3 contracts (pre-freeze) | 1 | 1 | None | ✅ PASS |
+| P3-O2 | Wire Trust Plane into `src/server/container.ts` | 9 | 9 | P3-C10 (Trust Plane complete) | ✅ PASS |
+| P3-O3 | Wire Evidence Plane into `src/server/container.ts` | 9 | 9 | P3-G7 (Evidence Plane complete) | ✅ PASS |
+| P3-O4 | Wire Commerce Plane into `src/server/container.ts` | 9 | 9 | P3-C17, P3-C22 (Commerce + Adapters) | ✅ PASS |
+| P3-O5 | Wire Discovery Plane into `src/server/container.ts` | 9 | 9 | P3-G12 (Discovery Plane complete) | ✅ PASS |
+| P3-O6 | Wire Gateway into server routes | 9 | 9 | P3-C30 (Gateway complete) | ✅ PASS |
+| P3-O7 | Update `src/shared/config.ts` for Phase 3 | 9 | 9 | P3-C1 | ✅ PASS |
+| P3-O8 | Integration test — Trust Plane end-to-end | 9 | 9 | P3-O2 | ✅ PASS |
+| P3-O9 | Integration test — Evidence Plane end-to-end | 9 | 9 | P3-O3 | ✅ PASS |
+| P3-O10 | Integration test — Commerce Plane end-to-end | 9 | 9 | P3-O4 | ✅ PASS |
+| P3-O11 | Integration test — Cross-plane trust→commerce mandate | 9 | 9 | P3-O2, P3-O4 | ✅ PASS |
+| P3-O12 | Controlled chaos protocol tests | 9 | 9 | P3-O8 thru P3-O11 | ✅ PASS |
 
 ---
 

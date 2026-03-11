@@ -282,18 +282,18 @@ GEMINI owns the Evidence Plane, Discovery Plane, Hive Mind V2 namespace upgrades
 
 | # | Task | Wave | Seq | Depends On | Status |
 |---|------|------|-----|------------|--------|
-| P3-G1 | Create `src/evidence/IResearchBroker.ts` | 3 | 3 | P3-C1 (contracts) | ⬜ NOT_STARTED |
-| P3-G2 | Create `src/evidence/SourcePolicyEngine.ts` + tests | 3 | 3 | P3-C1 | ⬜ NOT_STARTED |
-| P3-G3 | Create `src/evidence/EvidenceStore.ts` + tests | 3 | 3 | P3-C1 | ⬜ NOT_STARTED |
-| P3-G4 | Create `src/evidence/ClaimExtractor.ts` + tests | 3 | 3 | P3-C1 | ⬜ NOT_STARTED |
-| P3-G5 | Create `src/evidence/FreshnessScorer.ts` + tests | 3 | 3 | P3-C1 | ⬜ NOT_STARTED |
-| P3-G6 | Create `src/evidence/CitationCompiler.ts` + tests | 3 | 3 | P3-C1 | ⬜ NOT_STARTED |
-| P3-G7 | Create `src/evidence/ResearchBroker.ts` + tests | 3 | 3 | P3-G1 thru P3-G6 | ⬜ NOT_STARTED |
-| P3-G8 | Create `src/evidence/ResearchReportBuilder.ts` + tests | 3 | 3 | P3-G4, P3-G5, P3-G6 | ⬜ NOT_STARTED |
-| P3-G9 | Create `src/discovery/InternalServiceRegistry.ts` + tests | 7 | 7 | P3-C1 | ⬜ NOT_STARTED |
-| P3-G10 | Create `src/discovery/ExternalManifestPublisher.ts` + tests | 7 | 7 | P3-G9 | ⬜ NOT_STARTED |
-| P3-G11 | Create `src/discovery/DiscoveryPolicyEngine.ts` + tests | 7 | 7 | P3-G9 | ⬜ NOT_STARTED |
-| P3-G12 | Create `src/discovery/ProtocolInjectionSwarm.ts` + tests | 7 | 7 | P3-G10, P3-G11 | ⬜ NOT_STARTED |
+| P3-G1 | Create `src/evidence/IResearchBroker.ts` | 3 | 3 | P3-C1 (contracts) | ✅ PASS |
+| P3-G2 | Create `src/evidence/SourcePolicyEngine.ts` + tests | 3 | 3 | P3-C1 | ✅ PASS |
+| P3-G3 | Create `src/evidence/EvidenceStore.ts` + tests | 3 | 3 | P3-C1 | ✅ PASS |
+| P3-G4 | Create `src/evidence/ClaimExtractor.ts` + tests | 3 | 3 | P3-C1 | ✅ PASS |
+| P3-G5 | Create `src/evidence/FreshnessScorer.ts` + tests | 3 | 3 | P3-C1 | ✅ PASS |
+| P3-G6 | Create `src/evidence/CitationCompiler.ts` + tests | 3 | 3 | P3-C1 | ✅ PASS |
+| P3-G7 | Create `src/evidence/ResearchBroker.ts` + tests | 3 | 3 | P3-G1 thru P3-G6 | ✅ PASS |
+| P3-G8 | Create `src/evidence/ResearchReportBuilder.ts` + tests | 3 | 3 | P3-G4, P3-G5, P3-G6 | ✅ PASS |
+| P3-G9 | Create `src/discovery/InternalServiceRegistry.ts` + tests | 7 | 7 | P3-C1 | ✅ PASS |
+| P3-G10 | Create `src/discovery/ExternalManifestPublisher.ts` + tests | 7 | 7 | P3-G9 | ✅ PASS |
+| P3-G11 | Create `src/discovery/DiscoveryPolicyEngine.ts` + tests | 7 | 7 | P3-G9 | ✅ PASS |
+| P3-G12 | Create `src/discovery/ProtocolInjectionSwarm.ts` + tests | 7 | 7 | P3-G10, P3-G11 | ✅ PASS |
 | P3-G13 | Upgrade Librarian — Hive Mind V2 namespaces | 7b | 15 | P3-C1, P3-G3 | ✅ PASS |
 | P3-G14 | Dashboard — TrustDashboard component | 7b | — | P3-C1 | ✅ PASS |
 | P3-G15 | Dashboard — CommerceActivityPanel component | 7b | — | P3-C1 | ✅ PASS |
