@@ -115,7 +115,7 @@ export function CommerceActivityPanel({
                                             <Cell key={`cell-${index}`} fill={RAIL_COLORS[entry.name] || '#9ca3af'} />
                                         ))}
                                     </Pie>
-                                    <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                                    <Tooltip formatter={(value?: number) => value !== undefined ? `$${value.toFixed(2)}` : '$0.00'} />
                                 </PieChart>
                             </ResponsiveContainer>
                         ) : (

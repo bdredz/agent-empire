@@ -294,11 +294,11 @@ GEMINI owns the Evidence Plane, Discovery Plane, Hive Mind V2 namespace upgrades
 | P3-G10 | Create `src/discovery/ExternalManifestPublisher.ts` + tests | 7 | 7 | P3-G9 | ⬜ NOT_STARTED |
 | P3-G11 | Create `src/discovery/DiscoveryPolicyEngine.ts` + tests | 7 | 7 | P3-G9 | ⬜ NOT_STARTED |
 | P3-G12 | Create `src/discovery/ProtocolInjectionSwarm.ts` + tests | 7 | 7 | P3-G10, P3-G11 | ⬜ NOT_STARTED |
-| P3-G13 | Upgrade Librarian — Hive Mind V2 namespaces | 7b | 15 | P3-C1, P3-G3 | ⬜ NOT_STARTED |
-| P3-G14 | Dashboard — TrustDashboard component | 7b | — | P3-C1 | ⬜ NOT_STARTED |
-| P3-G15 | Dashboard — CommerceActivityPanel component | 7b | — | P3-C1 | ⬜ NOT_STARTED |
-| P3-G16 | Dashboard — EvidenceViewer component | 7b | — | P3-G3 | ⬜ NOT_STARTED |
-| P3-G17 | Dashboard — DiscoveryPanel component | 7b | — | P3-G9 | ⬜ NOT_STARTED |
+| P3-G13 | Upgrade Librarian — Hive Mind V2 namespaces | 7b | 15 | P3-C1, P3-G3 | ✅ PASS |
+| P3-G14 | Dashboard — TrustDashboard component | 7b | — | P3-C1 | ✅ PASS |
+| P3-G15 | Dashboard — CommerceActivityPanel component | 7b | — | P3-C1 | ✅ PASS |
+| P3-G16 | Dashboard — EvidenceViewer component | 7b | — | P3-G3 | ✅ PASS |
+| P3-G17 | Dashboard — DiscoveryPanel component | 7b | — | P3-G9 | ✅ PASS |
 
 ---
 
